@@ -19,7 +19,7 @@
   --bdr:#dde4ef;--bdr2:#c7d2e0;
   --r:14px;--s1:0 1px 4px rgba(0,30,80,.05);--s2:0 6px 24px rgba(0,30,80,.08);
 }
-body{font-family:'Noto Sans Thai','Inter',system-ui,sans-serif;color:var(--tx);min-height:100vh;-webkit-font-smoothing:antialiased;
+body{font-family:'Noto Sans Thai','Inter',system-ui,sans-serif;color:var(--tx);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;
   background:linear-gradient(180deg,#ffffff 0%,#eef4fb 15%,#dce8f5 40%,#c5d9ee 70%,#a8c8e4 100%);background-attachment:fixed}
 .hdr{background:linear-gradient(135deg,#0a5cba 0%,#1565c0 30%,#1976d2 60%,#42a5f5 100%);position:relative;overflow:hidden}
 .hdr::before{content:'';position:absolute;top:-100px;right:-60px;width:400px;height:400px;background:radial-gradient(circle,rgba(255,255,255,.12),transparent 60%);border-radius:50%}
@@ -32,13 +32,14 @@ body{font-family:'Noto Sans Thai','Inter',system-ui,sans-serif;color:var(--tx);m
 .bdg .lb{font-size:9px;color:rgba(255,255,255,.65);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
 .bdg .vl{font-size:16px;font-weight:800;color:#fff;margin-top:1px}
 .nav-bar{display:flex;align-items:center;gap:8px;padding:10px 28px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(0,20,60,.04);flex-wrap:wrap}
-.tabs{display:flex;gap:4px;margin-right:auto}
+.tabs{display:flex;gap:4px;margin-right:auto;flex-wrap:wrap}
+
 .tab-b{padding:8px 20px;border:none;background:transparent;color:var(--dim);font-family:inherit;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;transition:.2s}
 .tab-b:hover{background:var(--p5);color:var(--p1)}
 .tab-b.active{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;box-shadow:0 3px 12px rgba(10,92,186,.3)}
 .dbar{display:flex;align-items:center;gap:8px}
 .dbar label{font-size:11px;color:var(--dim);font-weight:600}
-.dbar select{padding:7px 12px;border:1.5px solid var(--bdr2);border-radius:9px;font-family:inherit;font-size:12px;background:#fff;color:var(--tx);cursor:pointer;font-weight:500;min-width:250px}
+.dbar select{padding:7px 12px;border:1.5px solid var(--bdr2);border-radius:9px;font-family:inherit;font-size:12px;background:#fff;color:var(--tx);cursor:pointer;font-weight:500;min-width:0;max-width:100%;flex:1}
 .dbar select:focus{outline:none;border-color:var(--p3);box-shadow:0 0 0 3px rgba(66,165,245,.12)}
 .nb{width:34px;height:34px;border:1.5px solid var(--bdr2);border-radius:9px;background:#fff;cursor:pointer;font-size:14px;color:var(--p1);display:flex;align-items:center;justify-content:center;transition:.15s;font-weight:700}
 .nb:hover{background:var(--p2);color:#fff;border-color:var(--p2)}
@@ -63,11 +64,44 @@ body{font-family:'Noto Sans Thai','Inter',system-ui,sans-serif;color:var(--tx);m
 .mb{margin-bottom:16px}
 @media(max-width:1024px){.g4{grid-template-columns:1fr 1fr}.nav-bar{flex-direction:column;align-items:flex-start;gap:8px}}
 @media(max-width:768px){.g2,.g3,.g4{grid-template-columns:1fr}}
+@media(max-width:640px){
+  .hdr-in{padding:12px 14px;gap:10px}
+  .hdr img{width:40px;height:40px;border-radius:10px}
+  .hdr-t h1{font-size:15px}
+  .hdr-t p{font-size:10px}
+  .hdr-b{gap:5px;margin-left:0;width:100%}
+  .bdg{padding:5px 10px;flex:1;min-width:0}
+  .bdg .lb{font-size:7.5px}
+  .bdg .vl{font-size:13px}
+  .nav-bar{padding:8px 14px;gap:6px}
+  .tabs{width:100%;gap:2px}
+  .tab-b{padding:6px 12px;font-size:11px}
+  .dbar{width:100%}
+  .dbar select{min-width:0;flex:1;font-size:11px;padding:6px 8px}
+  .dbar label{font-size:10px}
+  .nb{width:30px;height:30px;font-size:13px}
+  .wrap{padding:10px 10px}
+  .cd{padding:14px 14px;border-radius:12px}
+  .kv{font-size:22px}
+  .kv-s{font-size:17px}
+  .fr{gap:10px}
+  .g2,.g3,.g4,.mb{gap:10px;margin-bottom:10px}
+  .sec{margin:18px 0 10px}
+  .sec-t{font-size:12px}
+  .tb{font-size:10.5px}
+  .tb thead th{padding:7px 6px;font-size:8.5px}
+  .tb td{padding:6px 6px}
+  .cw{height:180px}
+  .rmk{padding:12px 14px}
+  .rmk p{font-size:10.5px}
+  .ch-box .sv-btn{width:26px;height:26px;font-size:11px}
+}
 .sec{display:flex;align-items:center;gap:10px;margin:28px 0 16px;padding-bottom:10px;border-bottom:2px solid var(--bdr)}
 .sec-i{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
 .sec-t{font-size:14px;font-weight:700;color:var(--tx);letter-spacing:-.2px}
 .sec-l{flex:1;height:1px;background:var(--bdr)}
-.tb{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.tb{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tb thead,.tb tbody,.tb tr{display:table;width:100%;table-layout:fixed}
 .tb thead th{background:linear-gradient(135deg,#f0f5fb,#e3ecf6);padding:10px 12px;text-align:right;font-weight:700;color:var(--p1);border-bottom:2px solid var(--p4);font-size:10px;text-transform:uppercase;letter-spacing:.8px}
 .tb thead th:first-child{text-align:left;border-radius:10px 0 0 0}
 .tb thead th:last-child{border-radius:0 10px 0 0}
@@ -259,7 +293,7 @@ function render(){
   document.getElementById('t0').innerHTML=`
 <!-- CANE -->
 <div class="fr mb">
-  <div class="cd" style="flex:1 1 200px;min-width:200px;border-left:4px solid var(--p2)">
+  <div class="cd" style="flex:1 1 200px;border-left:4px solid var(--p2)">
     <div class="cd-t">ปริมาณอ้อยเข้าหีบ</div>
     <div style="margin-bottom:8px"><span style="font-size:10px;color:var(--dim);font-weight:600">เป้าหมาย</span>
       <div style="font-size:14px;font-weight:700;color:var(--warn)">${fI(L.cx)} <span class="kv-u">Tons</span></div></div>
@@ -269,7 +303,7 @@ function render(){
       <div class="kv kv-s" style="color:var(--p1)">${fI(L.cd)} <span class="kv-u">Tons</span></div></div>
   </div>
   <div class="cd gw" style="flex:0 0 210px">${arcGauge(L.cd,caneTarget,'อ้อยสะสม / เป้าหมาย','Tons',205)}</div>
-  <div class="cd" style="flex:2 1 320px;min-width:280px">
+  <div class="cd" style="flex:2 1 320px">
     <div class="cd-t">ปริมาณอ้อยเข้าหีบรายวัน (Tons)</div>
     ${chWrap('cc','อ้อยเข้าหีบรายวัน')}
   </div>
