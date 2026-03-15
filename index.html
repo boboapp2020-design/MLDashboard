@@ -221,8 +221,8 @@ function render(){
 <div class="fr mb" style="align-items:center">
   <div class="cd gw" style="flex:0 0 210px">${arcG(fmGV,fmTgt,isR?'รวมช่วง / เป้าหมาย':'สะสม / เป้าหมาย FM','Tons',205)}</div>
   <div class="cd" style="flex:1"><div class="g2">
-    <div><div class="cd-t">FM % Cane — แนวโน้ม</div>\${chW('fm_cane','FM_Cane')}</div>
-    <div><div class="cd-t">FM Purity — แนวโน้ม</div>\${chW('fm_pur','FM_Purity')}</div>
+    <div><div class="cd-t">FM % Cane — แนวโน้ม</div>${chW('fm_cane','FM_Cane')}</div>
+    <div><div class="cd-t">FM Purity — แนวโน้ม</div>${chW('fm_pur','FM_Purity')}</div>
   </div></div>
 </div>
 
@@ -236,10 +236,11 @@ function render(){
 <div class="g2 mb"><div class="cd"><div class="cd-t">Total Sugar Weight</div>${chW('ts1','Sugar')}</div><div class="cd"><div class="cd-t">% Cane as 96 Pol</div>${chW('ts2','96Pol')}</div></div>
 <div class="cd mb"><div class="cd-t">% CCS Recovery</div>${chW('ts3','CCS')}</div>
 
-<div class="cd mb" style="border-left:4px solid var(--ok)"><div class="cd-t">MECHANICAL EFFICIENCY</div>
+<div class="cd mb" style="border-left:4px solid var(--ok)"><div class="cd-t">MECHANICAL EFFICIENCY (Sugar Factory)</div>
   <div style="display:flex;gap:50px;margin-top:4px">
     <div><div style="font-size:10px;color:var(--dim);font-weight:600">${isR?'เฉลี่ย':'Today'}</div><div class="kv" style="color:var(--ok)">${isR?f2(avgK(S,'met')):f2(L.met)}%</div></div>
-    <div><div style="font-size:10px;color:var(--dim);font-weight:600">To-Date</div><div class="kv" style="color:var(--p1)">${f2(L.med)}%</div></div></div></div>
+    <div><div style="font-size:10px;color:var(--dim);font-weight:600">To-Date</div><div class="kv" style="color:var(--p1)">${f2(L.med)}%</div></div>
+    <div><div style="font-size:10px;color:var(--dim);font-weight:600">Target</div><div class="kv kv-s" style="color:var(--dim2)">98.67%</div></div></div></div>
 
 <div class="sec"><div class="sec-i" style="background:var(--errBg)">⚖️</div><div class="sec-t">BALANCE & RECOVERY — Losses</div><div class="sec-l"></div></div>
 <div class="cd mb"><table class="tb"><thead><tr><th style="text-align:left">Parameter</th><th>Today</th><th>${isR?'เฉลี่ย':'To-Date'}</th><th>Target</th></tr></thead><tbody>
@@ -334,15 +335,15 @@ function render(){
 <div class="cd mb" style="border-left:4px solid var(--err);background:linear-gradient(135deg,#fff5f5,#fff)">
   <div class="cd-t" style="color:var(--err)">⏱️ ชั่วโมงรวมในการหยุดหีบ</div>
   <div style="display:flex;gap:40px;align-items:center">
-    <div><div style="font-size:10px;color:var(--dim);font-weight:600">Today</div><div class="kv" style="color:var(--err)">${f2(stR.tm_t+stR.tb_t+stR.to_t)}<span class="kv-u"> hrs</span></div></div>
-    <div><div style="font-size:10px;color:var(--dim);font-weight:600">To-Date</div><div class="kv kv-s" style="color:var(--p1)">${f2(stR.tm_d+stR.tb_d+stR.to_d)}<span class="kv-u"> hrs</span></div></div>
+    <div><div style="font-size:10px;color:var(--dim);font-weight:600">Today</div><div class="kv" style="color:${(stR.tm_t+stR.tb_t+stR.to_t)>5?'#991b1b':(stR.tm_t+stR.tb_t+stR.to_t)>1?'#dc2626':'#ef4444'};font-weight:900">${f2(stR.tm_t+stR.tb_t+stR.to_t)}<span class="kv-u"> hrs</span></div></div>
+    <div><div style="font-size:10px;color:var(--dim);font-weight:600">To-Date</div><div class="kv kv-s" style="color:${(stR.tm_d+stR.tb_d+stR.to_d)>100?'#7f1d1d':(stR.tm_d+stR.tb_d+stR.to_d)>50?'#991b1b':'#dc2626'};font-weight:900">${f2(stR.tm_d+stR.tb_d+stR.to_d)}<span class="kv-u"> hrs</span></div></div>
     <div><div style="font-size:10px;color:var(--dim);font-weight:600">Target</div><div class="kv kv-s" style="color:var(--dim2)">${f2(stR.tm_x+stR.tb_x+stR.to_x)}<span class="kv-u"> hrs</span></div></div>
   </div>
 </div>
 
 <!-- Part 1: Mechanical/Electrical -->
 <div class="cd mb">
-  <button class="coll-btn" id="cb_mech" onclick="toggleColl('mech')">TOTAL HOUR STOPPED MECHANICAL/ELECTRICAL — Today: ${f2(stR.tm_t)} | To-Date: ${f2(stR.tm_d)} | Target: ${f2(stR.tm_x)}</button>
+  <button class="coll-btn" id="cb_mech" onclick="toggleColl('mech')">TOTAL HOUR STOPPED MECHANICAL/ELECTRICAL — <span style="color:${stR.tm_t>3?'#7f1d1d':stR.tm_t>0?'#dc2626':'var(--p1)'};font-weight:800">Today: ${f2(stR.tm_t)}</span> | <span style="color:${stR.tm_d>50?'#7f1d1d':stR.tm_d>20?'#991b1b':'#dc2626'};font-weight:800">To-Date: ${f2(stR.tm_d)}</span> | Target: ${f2(stR.tm_x)}</button>
   <div class="coll-body" id="cd_mech">
     <table class="tb"><thead><tr><th style="text-align:left">Sub-item</th><th>Today</th><th>To-Date</th><th>Target</th></tr></thead><tbody>
       <tr><td>Milling</td><td class="v">${f2(stR.ml_t)}</td><td class="v">${f2(stR.ml_d)}</td><td>${f2(stR.ml_x)}</td></tr>
@@ -354,7 +355,7 @@ function render(){
 
 <!-- Part 2: Boiling House -->
 <div class="cd mb">
-  <button class="coll-btn" id="cb_boil" onclick="toggleColl('boil')">TOTAL HOUR STOPPED BOILING HOUSE — Today: ${f2(stR.tb_t)} | To-Date: ${f2(stR.tb_d)} | Target: ${f2(stR.tb_x)}</button>
+  <button class="coll-btn" id="cb_boil" onclick="toggleColl('boil')">TOTAL HOUR STOPPED BOILING HOUSE — <span style="color:${stR.tb_t>3?'#7f1d1d':stR.tb_t>0?'#dc2626':'var(--p1)'};font-weight:800">Today: ${f2(stR.tb_t)}</span> | <span style="color:${stR.tb_d>30?'#7f1d1d':stR.tb_d>10?'#991b1b':'#dc2626'};font-weight:800">To-Date: ${f2(stR.tb_d)}</span> | Target: ${f2(stR.tb_x)}</button>
   <div class="coll-body" id="cd_boil">
     <table class="tb"><thead><tr><th style="text-align:left">Sub-item</th><th>Today</th><th>To-Date</th><th>Target</th></tr></thead><tbody>
       <tr><td>Evaporator</td><td class="v">${f2(stR.ev_t)}</td><td class="v">${f2(stR.ev_d)}</td><td>${f2(stR.ev_x)}</td></tr>
@@ -366,7 +367,7 @@ function render(){
 
 <!-- Part 3: Other -->
 <div class="cd mb">
-  <button class="coll-btn" id="cb_other" onclick="toggleColl('other')">TOTAL HOUR STOPPED OTHER — Today: ${f2(stR.to_t)} | To-Date: ${f2(stR.to_d)} | Target: ${f2(stR.to_x)}</button>
+  <button class="coll-btn" id="cb_other" onclick="toggleColl('other')">TOTAL HOUR STOPPED OTHER — <span style="color:${stR.to_t>3?'#7f1d1d':stR.to_t>0?'#dc2626':'var(--p1)'};font-weight:800">Today: ${f2(stR.to_t)}</span> | <span style="color:${stR.to_d>10?'#7f1d1d':stR.to_d>3?'#991b1b':'#dc2626'};font-weight:800">To-Date: ${f2(stR.to_d)}</span> | Target: ${f2(stR.to_x)}</button>
   <div class="coll-body" id="cd_other">
     <table class="tb"><thead><tr><th style="text-align:left">Sub-item</th><th>Today</th><th>To-Date</th><th>Target</th></tr></thead><tbody>
       <tr><td>Mechanical Maintenance</td><td class="v">${f2(stR.mm_t)}</td><td class="v">${f2(stR.mm_d)}</td><td>${f2(stR.mm_x)}</td></tr>
@@ -418,7 +419,10 @@ function render(){
   <tr><td>Bagasse Used % Cane</td><td class="v">${isR?'-':f2(L.fb_used_t)}</td><td class="v">${isR?f2(avgK(S,'fb_used_t')):f2(L.fb_used_d)}</td><td>${f2(L.fb_used_x)}</td></tr>
   <tr><td>Bagasse Surplus % Cane</td><td class="v">${isR?'-':f2(L.fb_surp_t)}</td><td class="v">${isR?f2(avgK(S,'fb_surp_t')):f2(L.fb_surp_d)}</td><td>${f2(L.fb_surp_x)}</td></tr>
 </tbody></table></div>
-<div class="cd mb"><div class="cd-t">Bagasse Used % Cane — แนวโน้ม</div>${chW('e_bagasse','Bagasse')}</div>
+<div class="g2 mb">
+  <div class="cd"><div class="cd-t">Bagasse Used % Cane — แนวโน้ม</div>${chW('e_bagasse','Bagasse_Used')}</div>
+  <div class="cd"><div class="cd-t">Bagasse Surplus % Cane — แนวโน้ม</div>${chW('e_surplus','Bagasse_Surplus')}</div>
+</div>
 <div style="text-align:center;padding:24px 0 8px;font-size:11px;color:var(--dim)">สร้างโดย นายสุรศักดิ์ นามวรรณ แผนกบริหารคุณภาพ</div>
 `;
 
@@ -433,7 +437,7 @@ function render(){
   mc('fm_pur','line',lb,[ln('Purity Today',S.map(r=>r.fpt),P.r),rL('Target 33.10',33.10,P.g,n)]);
   mc('ts1','bar',lb,[br('Weight',S.map(r=>r.twt),P.b)]);
   mc('ts2','line',lb,[ln('Today',S.map(r=>r.t9t),P.y),ln('To-Date',S.map(r=>r.t9d),P.b),ln('Target',S.map(r=>typeof r.t9x==='number'?r.t9x:0),P.o,true)]);
-  mc('ts3','line',lb,[ln('Today',S.map(r=>r.trt),P.o),ln('To-Date',S.map(r=>r.trd),P.b),rL('Target 93',93,P.g,n)]);
+  mc('ts3','line',lb,[ln('Today',S.map(r=>r.trt),P.o),ln('To-Date',S.map(r=>r.trd),P.b),rL('Target',93,P.g,n)]);
   mc('bl1','line',lb,[ln('Today',S.map(r=>r.tlt),P.r),ln('To-Date',S.map(r=>r.tld),P.b),rL('Target 16.54',16.54,P.g,n)]);
   mc('bl2','line',lb,[ln('Today',S.map(r=>r.lbt),'#ef4444'),ln('To-Date',S.map(r=>r.lbd),P.b),rL('Target 3',3,P.g,n)]);
   mc('bl3','line',lb,[ln('Today',S.map(r=>r.lft),P.o),ln('To-Date',S.map(r=>r.lfd),P.b),rL('Target 0.33',0.33,P.g,n)]);
@@ -443,6 +447,7 @@ function render(){
   mc('e_ww','line',lb,[ln('น้ำเสีย (ลบ.ม.)',S.map(r=>r.w_waste_t),P.o)]);
   // Fuel balance chart
   mc('e_bagasse','line',lb,[ln('Bagasse Used % Cane',S.map(r=>r.fb_used_t||0),P.o),rL('Target 27.13',27.13,P.g,n)]);
+  mc('e_surplus','line',lb,[ln('Bagasse Surplus % Cane',S.map(r=>r.fb_surp_t||0),P.b),rL('Target 1.37',1.37,P.g,n)]);
 
   // Stoptime charts
   const stLb=SS.map(r=>sd(r.d));
