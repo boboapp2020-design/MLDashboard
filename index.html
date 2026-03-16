@@ -182,7 +182,7 @@ function render(){
   const SS=ST.filter(r=>dateSet.has(r.d));
   const SL=SS.length?SS[SS.length-1]:null;
 
-  const caneTarget=typeof L.cx==='number'?L.cx:720000,edlTarget=16228800;
+  const caneTarget=650000,edlTarget=16228800;
   const caneGV=isR?sumK(S,'ct'):L.cd,fmGV=isR?sumK(S,'fwt'):(typeof L.fwd==='number'?L.fwd:0),fmTgt=typeof L.fwx==='number'?L.fwx:30216;
   const kwhGV=isR?sumK(S,'ket'):L.ked;
 
