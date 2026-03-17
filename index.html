@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MITR LAO SUGAR — Executive Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -536,10 +537,10 @@ function render(){
 function showSummary(){
   if(mode==='range')return alert('กรุณาเลือกโหมด "วันเดียว" เพื่อดูสรุปรายวัน');
   const L=D[ix];
-  const stopList=L.srmk&&L.srmk.length>0?L.srmk.map(s=>'• '+s.dept+': '+s.cause+' ('+s.dur_min+' นาที)').join('<br>'):'ไม่มีการหยุดหีบ ✅';
-  const yieldKg=(typeof L.yt==='number'&&L.yt>0)?(L.yt*10).toFixed(1)+' kg/TC':'-';
+  const CAP=8000; // Mill Capacity 8,000 TC/day (Design Capacity)
 
-  // Values
+  // Extract values
+  const ct=typeof L.ct==='number'?L.ct:0;
   const ccs=typeof L.st==='number'?L.st:0, sx=typeof L.sx==='number'?L.sx:13.85;
   const pur=typeof L.pur_t==='number'?L.pur_t:0;
   const me=typeof L.met==='number'?L.met:0;
@@ -547,86 +548,227 @@ function showSummary(){
   const tl=typeof L.tlt==='number'?L.tlt:0;
   const ccsR=typeof L.trt==='number'?L.trt:0;
   const steam=typeof L.ast==='number'?L.ast:0;
+  const yv=typeof L.yt==='number'?L.yt:0;
+  const yieldKg=yv>0?(yv*10).toFixed(1)+' kg/TC':'-';
+  const capUtil=ct>0?(ct/CAP*100):0;
+  const stopCount=L.srmk?L.srmk.length:0;
+  const stopList=stopCount>0?L.srmk.map(s=>'• '+s.dept+': '+s.cause+' ('+s.dur_min+' นาที)').join('<br>'):'ไม่มีการหยุดหีบ ✅';
+  const totalStopMin=stopCount>0?L.srmk.reduce((a,s)=>a+s.dur_min,0):0;
+  const totalStopHr=totalStopMin/60;
 
-  // Color function: target-based coloring
-  // lower-is-better: bt, tl, steam | higher-is-better: ccs, pur, me, ccsR
+  // Color function
   function vc(val,tgt,lowerBetter){
-    if(!val||!tgt)return'var(--p1)';
+    if(val===0||!tgt)return'var(--p1)';
     const diff=lowerBetter?(val-tgt):(tgt-val);
-    const pct=Math.abs(diff)/tgt*100;
-    if(diff<=0)return'#0d8f47'; // on/better than target = green
-    if(pct<5)return'#1976d2';   // close = blue
-    if(pct<15)return'#f59e0b';  // moderate = amber
-    return'#dc2626';             // far = red
+    const pct=tgt!==0?Math.abs(diff)/Math.abs(tgt)*100:0;
+    if(diff<=0)return'#0d8f47';if(pct<5)return'#1976d2';if(pct<15)return'#f59e0b';return'#dc2626';
   }
 
-  // Score 10/10 logic (0.5 steps)
-  let score=10,issues=[],rootCauses=[];
-  if(ccs<sx){score-=0.5;issues.push('CCS ต่ำกว่าเป้า ('+f2(ccs)+' vs '+sx+')');}
-  if(ccs<sx-0.5)score-=0.5;
-  if(pur<85){score-=0.5;issues.push('Purity of First Juice ต่ำ ('+f2(pur)+'%) → คุณภาพอ้อยไม่ดี หรือ มีการย่อยสลาย Sucrose ก่อนเข้าหีบ');}
-  if(pur<80)score-=0.5;
-  if(bt>3){score-=0.5;issues.push('อ้อยไฟไหม้สูง ('+f2(bt)+'%) → ส่งผลให้ Purity ลด, Colour สูง, Recovery ต่ำ');}
-  if(bt>8)score-=0.5;
-  if(bt>15)score-=0.5;
-  if(tl>16.54){score-=0.5;issues.push('Total Loss สูง ('+f2(tl)+'%) → ตรวจสอบ Undetermined Loss และ Loss in Molasses');}
-  if(tl>20)score-=0.5;
-  if(me<98.67){score-=0.5;issues.push('ME ต่ำ ('+f2(me)+'%) → มีการหยุดเครื่องจักร ส่งผลต่อ Throughput');}
-  if(me<90)score-=0.5;
-  if(steam>450){score-=0.5;issues.push('Steam สูง ('+f2(steam)+' Kg/TC) → ประสิทธิภาพ Boiler หรือ Evaporator ต่ำ');}
-  if(ccsR<93){score-=0.5;issues.push('% CCS Recovery ต่ำ ('+f2(ccsR)+'%) → Sugar Loss สูงในกระบวนการผลิต');}
-  if(L.srmk&&L.srmk.length>2){score-=0.5;issues.push('หยุดหีบหลายครั้ง ('+L.srmk.length+' ครั้ง) → กระทบต่อ Capacity และ Steam Balance');}
-  score=Math.max(0,Math.min(10,score));
+  // ========== EXPERT SCORING 10/10 ==========
+  let score=10, issues=[], rootCauses=[], tips=[];
 
-  // Root cause analysis (Sugar Tech)
-  if(bt>5&&pur<85)rootCauses.push('อ้อยไฟไหม้สูงทำให้เกิดการย่อยสลาย Sucrose (Inversion) → Purity ลด → CCS ลด → Yield ลด เป็นผลกระทบแบบลูกโซ่');
-  if(bt>5&&ccs<sx)rootCauses.push('% Burnt Cane สูง ส่งผลโดยตรงต่อ CCS เนื่องจาก Dextran และ Colour ที่เพิ่มขึ้นจากการเผา');
-  if(tl>18&&ccsR<90)rootCauses.push('Total Loss สูงร่วมกับ % CCS Recovery ต่ำ → ตรวจสอบ Molasses Exhaustion, Undetermined Loss, และระบบ Crystallization');
-  if(me<90&&steam>500)rootCauses.push('ME ต่ำทำให้ Steam Balance ไม่สมดุล → Specific Steam Consumption สูง เพราะ Idle Load ขณะหยุดเครื่อง');
-  if(issues.length===0)rootCauses.push('ผลการผลิตดีเยี่ยม ทุกพารามิเตอร์เป็นไปตามเป้าหมาย');
-  if(rootCauses.length===0&&issues.length>0)rootCauses.push('ควรปรับปรุงตามประเด็นที่ระบุข้างต้น เพื่อเพิ่ม Overall Recovery');
+  // --- 1. CCS (2.0 pts max deduction) - THE most critical KPI ---
+  if(ccs>0&&ccs<sx){
+    const gap=sx-ccs;
+    if(gap>2){score-=2;issues.push('CCS ต่ำมาก ('+f2(ccs)+' vs เป้า '+sx+') — สูญเสีย Recoverable Sugar รุนแรง ส่งผลต่อ Yield โดยตรง')}
+    else if(gap>1){score-=1;issues.push('CCS ต่ำกว่าเป้า ('+f2(ccs)+' vs '+sx+') — Pol/Brix ratio ไม่ดี ตรวจสอบคุณภาพอ้อยและ Inversion')}
+    else{score-=0.5;issues.push('CCS ใกล้เป้าแต่ยังไม่ถึง ('+f2(ccs)+')');}
+  }
 
-  // Score label & color
-  const labels=[{s:0,l:'แย่มาก',c:'#7f1d1d'},{s:3,l:'ปรับปรุง',c:'#dc2626'},{s:5,l:'พอใช้',c:'#f59e0b'},{s:6.5,l:'ดี',c:'#0d8f47'},{s:8,l:'ดีมาก',c:'#059669'},{s:9.5,l:'สุดยอด',c:'#047857'}];
+  // --- 2. Burnt Cane (1.5 pts) - Chain effect destroyer ---
+  if(bt>3){
+    if(bt>15){score-=1.5;issues.push('อ้อยไฟไหม้วิกฤต ('+f2(bt)+'%) — Dextran พุ่งสูง ทำให้ความหนืดน้ำอ้อยเพิ่ม, Sucrose Inversion รุนแรง, สี (ICUMSA Colour) เสียหาย, การกรองและการตกผลึกมีปัญหา')}
+    else if(bt>8){score-=1;issues.push('อ้อยไฟไหม้สูง ('+f2(bt)+'%) — ส่งผลต่อ Apparent Purity, เพิ่ม Non-sugars, ลด Extraction Efficiency')}
+    else{score-=0.5;issues.push('อ้อยไฟไหม้เกินเป้า ('+f2(bt)+'% vs <3%) — เริ่มส่งผลต่อ Pol ในกาก')}
+  }
+
+  // --- 3. Purity of First Juice (1.0 pt) ---
+  if(pur>0&&pur<85){
+    if(pur<80){score-=1;issues.push('Purity of First Juice ต่ำมาก ('+f2(pur)+'%) — บ่งชี้ว่า Non-sugars สูง อาจเกิดจากอ้อยค้างไร่ (Stale Cane), Dextran, หรือดินปน')}
+    else{score-=0.5;issues.push('Purity of First Juice ต่ำ ('+f2(pur)+'% vs 85%) — ตรวจสอบ Trash %, อ้อยไฟไหม้, และอายุอ้อยหลังตัด')}
+  }
+
+  // --- 4. Total Loss (1.0 pt) ---
+  if(tl>16.54){
+    if(tl>25){score-=1;issues.push('Total Loss สูงมาก ('+f2(tl)+'%) — Mass Balance ชี้ว่ามี Undetermined Loss สูง ตรวจสอบระบบ Weighing, การรั่วไหล, และ Sucrose Degradation ในหม้อระเหย')}
+    else if(tl>20){score-=0.5;issues.push('Total Loss สูง ('+f2(tl)+'%) — ตรวจสอบ Loss in Final Molasses (Purity) และ Loss in Bagasse (Pol in Bagasse)')}
+    else{score-=0.5;issues.push('Total Loss เกินเป้าเล็กน้อย ('+f2(tl)+'% vs 16.54%)')}
+  }
+
+  // --- 5. ME (1.0 pt) ---
+  if(me>0&&me<98.67){
+    if(me<80){score-=1;issues.push('M.E. ต่ำมาก ('+f2(me)+'%) — เครื่องจักรหยุดนาน กระทบ Continuous Process, Steam Balance เสียสมดุล, อ้อยค้างรอหีบนานขึ้น')}
+    else if(me<93){score-=0.5;issues.push('M.E. ต่ำ ('+f2(me)+'%) — หยุดเครื่องกระทบ Throughput และทำให้ Steam ต่อตันอ้อยสูงขึ้น')}
+    else{score-=0.5;issues.push('M.E. ยังไม่ถึงเป้า ('+f2(me)+'% vs 98.67%)')}
+  }
+
+  // --- 6. % CCS Recovery (1.0 pt) ---
+  if(ccsR>0&&ccsR<93){
+    if(ccsR<80){score-=1;issues.push('% CCS Recovery ต่ำมาก ('+f2(ccsR)+'%) — Sugar Loss รุนแรงใน Crystallization/Centrifugal — ตรวจสอบ Supersaturation Control และ Molasses Exhaustion')}
+    else if(ccsR<87){score-=0.5;issues.push('% CCS Recovery ต่ำ ('+f2(ccsR)+'%) — ตรวจสอบระบบ Boiling Scheme และ Purity of Final Molasses')}
+    else{score-=0.5;issues.push('% CCS Recovery ยังไม่ถึงเป้า ('+f2(ccsR)+'% vs 93%)')}
+  }
+
+  // --- 7. Steam (1.0 pt) ---
+  if(steam>0&&steam>450){
+    if(steam>600){score-=1;issues.push('Steam สูงมาก ('+f2(steam)+' Kg/TC) — ระบบ Thermal Economy มีปัญหารุนแรง ตรวจสอบ Evaporator Scaling, Vapor Bleeding Configuration, และ Condensate Recovery')}
+    else if(steam>500){score-=0.5;issues.push('Steam สูง ('+f2(steam)+' Kg/TC) — อาจเกิดจาก Evaporator ทำงานไม่เต็มประสิทธิภาพ หรือ Steam Trap รั่ว')}
+    else{score-=0.5;issues.push('Steam เกินเป้าเล็กน้อย ('+f2(steam)+' vs 450 Kg/TC)')}
+  }
+
+  // --- 8. Capacity Utilization (0.5 pt) ---
+  if(ct>0&&ct<CAP*0.7){
+    score-=0.5;
+    const tch=ct/24;
+    issues.push('หีบอ้อยได้ '+fI(ct)+' ตัน ('+f2(capUtil)+'% ของ Capacity '+fI(CAP)+' ตัน/วัน, TCH='+f2(tch)+') — ไม่เต็มกำลังผลิต ทำให้ต้นทุนต่อตันอ้อยสูงขึ้น');
+  }
+
+  // --- 9. Stoppage (0.5 pt) ---
+  if(totalStopMin>120){score-=0.5;issues.push('หยุดหีบรวม '+totalStopMin+' นาที ('+f2(totalStopHr)+' ชม., '+stopCount+' ครั้ง) — หยุด-เดินซ้ำทำให้ Steam Consumption สูงจากการ Warm-up')}
+
+  score=Math.max(0,Math.min(10,Math.round(score*2)/2));
+
+  // ========== ROOT CAUSE ANALYSIS (Expert Sugar Tech + Mech Eng) ==========
+
+  // Chain Effect: Burnt Cane
+  if(bt>5){
+    let chain='🔗 <b>ผลกระทบลูกโซ่จากอ้อยไฟไหม้ '+f2(bt)+'%:</b><br>';
+    chain+='อ้อยเผา → แบคทีเรีย Leuconostoc สร้าง <b>Dextran</b> → ความหนืดน้ำอ้อยเพิ่ม → ';
+    chain+='การกรองใน Clarifier ช้าลง → Mud ไม่แยกดี → ';
+    chain+='<b>Sucrose Inversion</b> จากกรดที่เพิ่ม (pH ต่ำ + อุณหภูมิ) → ';
+    chain+='Pol ลด, Brix คงที่ → <b>Purity ตก</b> → CCS ลด → Recovery ลด';
+    if(pur<85) chain+='<br>📊 ยืนยัน: Purity วันนี้ '+f2(pur)+'% (ต่ำกว่า 85%) สอดคล้องกับผลกระทบข้างต้น';
+    rootCauses.push(chain);
+    tips.push('💡 <b>ลดอ้อยไฟไหม้เป็นอันดับแรก</b> — ตาม Hugot ทุก 1% Trash ที่ลด จะเพิ่ม Recoverable Sugar ~0.2% และลด ICUMSA Colour ~50 units');
+  }
+
+  // Capacity Analysis
+  if(ct>0){
+    const tch=ct/24;
+    const designTCH=CAP/24; // ~333 TCH
+    if(tch<designTCH*0.7&&me>90){
+      rootCauses.push('🏭 <b>Capacity Utilization ต่ำ ('+f2(capUtil)+'%)</b>: โรงงานมี Design Capacity '+fI(CAP)+' ตัน/วัน (TCH ≈'+f2(designTCH)+') แต่หีบได้เพียง TCH='+f2(tch)+'<br>เมื่อ M.E.='+f2(me)+'% (เครื่องจักรพร้อม) แสดงว่าปัญหาอยู่ที่ <b>ปริมาณอ้อยเข้าโรงงาน (Cane Supply)</b> ไม่ใช่เครื่องจักร<br>ผลกระทบ: Specific Steam Consumption สูง ('+f2(steam)+' Kg/TC) เพราะ Fixed Heat Loss ถูกหารด้วยอ้อยน้อย, ต้นทุนผลิตต่อตันสูง');
+      tips.push('💡 <b>เพิ่ม Cane Supply</b> ให้ใกล้ '+fI(CAP)+' ตัน — จะช่วยลด Steam/TC และเพิ่ม Cogeneration Revenue');
+    }
+    if(tch<designTCH*0.7&&me<85){
+      rootCauses.push('🏭 <b>Throughput ต่ำจากเครื่องจักร</b>: TCH='+f2(tch)+' (Capacity '+f2(designTCH)+' TCH) ร่วมกับ M.E.='+f2(me)+'%<br>สาเหตุที่เป็นไปได้: (1) Hydraulic System ของลูกหีบรั่ว/แรงดันต่ำ → Roller Rise ผิดปกติ (2) Cane Preparation Index (PI) ต่ำ → อ้อยไม่แตกดี → Feed Rate ลด (3) Turbine/Motor drive มีปัญหา');
+      tips.push('💡 <b>ตรวจสอบ Hydraulic Pressure</b> ของลูกหีบทุกชุด และ Amperage ของ Drive Motor — หากไม่ถึง Full Load แสดงว่าป้อนอ้อยไม่เต็ม');
+    }
+    if(ct>=CAP*0.95){
+      tips.push('💡 กำลังผลิตใกล้เต็ม Capacity — ตรวจสอบ Pol in Bagasse หากสูง >2% อาจต้องเพิ่ม Imbibition Water หรือลดความเร็วรอบลูกหีบเพื่อเพิ่ม Extraction');
+    }
+  }
+
+  // Total Loss + Recovery Analysis
+  if(tl>20&&ccsR>0&&ccsR<85){
+    rootCauses.push('⚗️ <b>Total Loss สูง '+f2(tl)+'% + Recovery ต่ำ '+f2(ccsR)+'%:</b><br>Mass Balance ชี้ว่ามีการสูญเสียน้ำตาลในหลายจุด:<br>'+
+    '(1) <b>Loss in Bagasse</b>: ตรวจ Pol in Bagasse — หากสูงกว่า 2% → ลูกหีบบีบอัดไม่ดีหรือ Imbibition ไม่พอ<br>'+
+    '(2) <b>Loss in Final Molasses</b>: ตรวจ Purity of Final Molasses — หากสูงกว่า 33% → Boiling Scheme ไม่ดี, Crystallization ไม่หมดจด<br>'+
+    '(3) <b>Undetermined Loss</b>: เกิดจาก Sucrose Inversion ในหม้อระเหย (pH ต่ำ+อุณหภูมิสูง), การรั่วไหล, หรือ Microbial Degradation');
+    tips.push('💡 <b>ตรวจสอบ Purity Drop</b> ระหว่าง Mixed Juice → Clear Juice → Syrup — หากตกมากในช่วงหม้อระเหย แสดงว่าเกิด Inversion ต้องเพิ่มการควบคุม pH');
+  }
+
+  // Steam Analysis
+  if(steam>500){
+    let steamIssue='💨 <b>Steam Consumption สูง '+f2(steam)+' Kg/TC (เป้า 450):</b><br>';
+    if(me<90) steamIssue+='M.E. ต่ำ '+f2(me)+'% → เกิด Idle Load ขณะหยุดเครื่อง (Energy Balance: ใช้ Steam คงที่แม้ไม่หีบ → Steam/TC พุ่ง)<br>';
+    if(ct<CAP*0.7) steamIssue+='Throughput ต่ำ '+fI(ct)+' ตัน → Fixed Heat Loss ถูกหารด้วยอ้อยน้อย ทำให้ Specific Steam สูง<br>';
+    steamIssue+='ตรวจสอบเพิ่มเติม: (1) ตะกรันหม้อระเหย (วัด Approach Temp ของ Juice Heater) (2) Vapor Bleeding จาก Effect ที่ 1-2 เหมาะสมหรือไม่ (3) Steam Trap ทำงานปกติหรือไม่ (4) Condensate กลับ Boiler ได้ครบหรือไม่';
+    rootCauses.push(steamIssue);
+    tips.push('💡 <b>Thermal Economy</b>: ตรวจสอบ Brix ของ Syrup ออกจากหม้อระเหย — หาก <65°Bx แสดงว่าหม้อระเหยทำงานไม่เต็มที่ อาจมี Scaling');
+  }
+  if(steam>450&&steam<=500&&ct>=CAP*0.85){
+    tips.push('💡 Steam ใกล้เป้า — ปรับ Vapor Bleeding ดึงไอจาก V1/V2 ไปใช้ใน Pan และ Juice Heater แทนใช้ Exhaust Steam โดยตรง จะช่วยลด Steam ลงได้');
+  }
+
+  // ME + Stoppage
+  if(me>0&&me<90&&totalStopHr>2){
+    rootCauses.push('⚙️ <b>M.E. ต่ำ '+f2(me)+'% (หยุด '+f2(totalStopHr)+' ชม.):</b><br>'+
+    'การหยุด-เดินซ้ำส่งผลเสียหลายด้าน:<br>'+
+    '(1) Steam Balance: ทุกครั้งที่เริ่มเดินใหม่ต้อง Warm-up หม้อระเหยและ Juice Heater → สิ้นเปลือง Steam<br>'+
+    '(2) Sucrose Loss: อ้อยรอหีบนานขึ้น → Microbial Activity สูง → Dextran เพิ่ม → Inversion เพิ่ม<br>'+
+    '(3) น้ำอ้อยค้างในระบบ → pH ลด → Sucrose Degradation ในหม้อระเหย');
+    tips.push('💡 <b>Predictive Maintenance</b>: ติดตั้งเซ็นเซอร์ Vibration ที่ลูกหีบและ Boiler Fan — ป้องกัน Unplanned Downtime');
+  }
+
+  // Good performance
+  if(issues.length===0){
+    rootCauses.push('✅ <b>ผลการผลิตยอดเยี่ยม</b> — ทุกพารามิเตอร์เป็นไปตามเป้าหมาย Mass Balance และ Energy Balance สมดุลดี');
+    tips.push('💡 รักษามาตรฐานนี้ — เน้น Preventive Maintenance และ Optimization ของ Vapor Bleeding เพื่อลด Steam ต่อไป');
+  }
+  if(rootCauses.length===0&&issues.length>0){
+    rootCauses.push('📊 ปรับปรุงตามประเด็นข้างต้น เน้นแก้จุดที่ส่งผลกระทบมากที่สุดก่อน (Pareto: 80/20)');
+    tips.push('💡 ทบทวน Mass Balance ทุก Station — จุดที่มี Loss สูงสุดคือจุดที่ควรแก้ไขก่อน');
+  }
+
+  score=Math.max(0,Math.min(10,Math.round(score*2)/2));
+
+  // Score label
+  const sl=[{s:0,l:'แย่มาก',c:'#7f1d1d'},{s:2,l:'ต้องปรับปรุงด่วน',c:'#991b1b'},{s:3.5,l:'ปรับปรุง',c:'#dc2626'},{s:5,l:'พอใช้',c:'#ea580c'},{s:6,l:'ปานกลาง',c:'#f59e0b'},{s:7,l:'ดี',c:'#65a30d'},{s:8,l:'ดีมาก',c:'#059669'},{s:9.5,l:'สุดยอด',c:'#047857'}];
   let sLabel='สุดยอด',sColor='#047857';
-  for(let i=labels.length-1;i>=0;i--){if(score>=labels[i].s){sLabel=labels[i].l;sColor=labels[i].c;break}}
+  for(let i=sl.length-1;i>=0;i--){if(score>=sl[i].s){sLabel=sl[i].l;sColor=sl[i].c;break}}
 
   document.getElementById('sumTitle').textContent='📋 สรุปผลการผลิต — '+L.d;
   document.getElementById('sumContent').innerHTML=`
-    <div class="sum-row"><span class="sl">🏭 ปริมาณอ้อยเข้าหีบ</span><span class="sv">${fI(L.ct)} Tons</span></div>
+    <div class="sum-row"><span class="sl">🏭 ปริมาณอ้อยเข้าหีบ</span><span class="sv">${fI(ct)} Tons <span style="font-size:9px;color:var(--dim)">(${f2(capUtil)}% of ${fI(CAP)})</span></span></div>
     <div class="sum-row"><span class="sl">🔥 อ้อยไฟไหม้</span><span class="sv" style="color:${vc(bt,3,true)}">${f2(bt)} %</span></div>
-    <div class="sum-row"><span class="sl">📊 C.C.S.</span><span class="sv" style="color:${vc(ccs,sx,false)}">${f2(ccs)}</span></div>
+    <div class="sum-row"><span class="sl">📊 C.C.S.</span><span class="sv" style="color:${vc(ccs,sx,false)}">${f2(ccs)} <span style="font-size:9px;color:var(--dim)">เป้า ${sx}</span></span></div>
     <div class="sum-row"><span class="sl">🔬 Purity of First Juice</span><span class="sv" style="color:${vc(pur,85,false)}">${f2(pur)} %</span></div>
-    <div class="sum-row"><span class="sl">🍬 % CCS Recovery (Total Sugar)</span><span class="sv" style="color:${vc(ccsR,93,false)}">${f2(ccsR)} %</span></div>
-    <div class="sum-row"><span class="sl">📈 Yield</span><span class="sv" style="color:${vc(typeof L.yt==='number'?L.yt*10:0,128,false)}">${yieldKg}</span></div>
+    <div class="sum-row"><span class="sl">🍬 % CCS Recovery</span><span class="sv" style="color:${vc(ccsR,93,false)}">${f2(ccsR)} %</span></div>
+    <div class="sum-row"><span class="sl">📈 Yield</span><span class="sv" style="color:${vc(yv>0?yv*10:0,128,false)}">${yieldKg}</span></div>
     <div class="sum-row"><span class="sl">📉 Total Loss</span><span class="sv" style="color:${vc(tl,16.54,true)}">${f2(tl)} %</span></div>
     <div class="sum-row"><span class="sl">💨 Steam Average</span><span class="sv" style="color:${vc(steam,450,true)}">${f2(steam)} Kg/TC</span></div>
-    <div class="sum-row" style="flex-direction:column"><span class="sl">🛑 การหยุดหีบ</span><div style="font-size:11px;color:var(--tx2);margin-top:4px;line-height:1.8">${stopList}</div></div>
     <div class="sum-row"><span class="sl">⚙️ M.E.</span><span class="sv" style="color:${vc(me,98.67,false)}">${f2(me)} %</span></div>
-    <div style="border-top:2px solid var(--bdr);margin-top:6px;padding-top:8px">
+    <div style="border-top:2px solid var(--bdr);margin-top:8px;padding-top:8px">
       <div class="sum-row"><span class="sl">🍬 น้ำตาลสะสม</span><span class="sv">${fI(L.twd)} Tons</span></div>
-      <div class="sum-row"><span class="sl">⚡ ขายไฟสะสม (KWH)</span><span class="sv">${fI(L.ked)}</span></div>
+      <div class="sum-row"><span class="sl">⚡ ขายไฟสะสม</span><span class="sv">${fI(L.ked)} KWH</span></div>
     </div>
-    <div style="text-align:center;margin:16px 0 6px">
-      <div style="font-size:32px;font-weight:900;color:${sColor}">${score.toFixed(1)}<span style="font-size:16px;font-weight:600;color:var(--dim)">/10</span></div>
-      <div style="font-size:14px;font-weight:700;color:${sColor};margin-top:2px">${sLabel}</div>
+    <div style="border-top:2px solid var(--bdr);margin-top:8px;padding-top:8px">
+      <div class="sum-row" style="flex-direction:column"><span class="sl">🛑 การหยุดหีบ${totalStopMin>0?' (รวม '+totalStopMin+' นาที / '+f2(totalStopHr)+' ชม.)':''}</span><div style="font-size:11px;color:var(--tx2);margin-top:4px;line-height:1.8">${stopList}</div></div>
     </div>
-    <div class="sum-comment" style="text-align:left">${issues.length>0?'<b style="color:var(--err)">⚠️ ประเด็นที่ต้องปรับปรุง:</b><br>'+issues.map(i=>'• '+i).join('<br>')+'<br><br><b style="color:var(--p1)">🔍 วิเคราะห์สาเหตุ (Sugar Tech):</b><br>'+rootCauses.join('<br>'):'<b style="color:var(--ok)">✅ '+rootCauses[0]+'</b>'}</div>`;
+    <div style="text-align:center;margin:16px 0 8px">
+      <div style="font-size:38px;font-weight:900;color:${sColor}">${score.toFixed(1)}<span style="font-size:18px;font-weight:600;color:var(--dim)">/10</span></div>
+      <div style="font-size:16px;font-weight:700;color:${sColor};margin-top:2px">${sLabel}</div>
+    </div>
+    <div class="sum-comment" style="text-align:left;font-size:11px;line-height:1.9">
+      ${issues.length>0?'<b style="color:var(--err)">⚠️ ประเด็นที่ต้องปรับปรุง:</b><br>'+issues.map(i=>'<span style="color:#b91c1c">• '+i+'</span>').join('<br>')+'<br><br><b style="color:var(--p1)">🔍 วิเคราะห์สาเหตุ:</b><br>'+rootCauses.join('<br><br>')+'<br><br><b style="color:var(--ok)">💡 คำแนะนำ:</b><br>'+tips.join('<br>'):'<b style="color:var(--ok)">'+rootCauses[0]+'</b><br><br>'+tips.join('<br>')}
+      <div style="margin-top:10px;font-size:9.5px;color:var(--dim);border-top:1px solid var(--bdr);padding-top:6px">อ้างอิง: Hugot's Handbook of Cane Sugar Engineering, ICUMSA Methods, SugarProcessTech | Capacity: ${fI(CAP)} TC/Day</div>
+    </div>`;
   document.getElementById('sumOverlay').classList.add('show');
 }
 function closeSummary(){document.getElementById('sumOverlay').classList.remove('show')}
 function saveSummary(){
   const box=document.getElementById('sumBox');
-  const W=box.scrollWidth,H=box.scrollHeight;
-  const c=document.createElement('canvas');c.width=W*3;c.height=H*3;
-  const ctx=c.getContext('2d');ctx.scale(3,3);ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
-  // Use html2canvas-like approach with foreignObject
-  const svg=new XMLSerializer().serializeToString(
-    Object.assign(document.createElementNS('http://www.w3.org/2000/svg','svg'),{innerHTML:'<foreignObject width="'+W+'" height="'+H+'"><body xmlns="http://www.w3.org/1999/xhtml" style="margin:0">'+box.outerHTML+'</body></foreignObject>',setAttribute:function(k,v){this[k]=v}})
-  );
-  const img=new Image();
-  img.onload=function(){ctx.drawImage(img,0,0);const a=document.createElement('a');a.download='summary_'+D[ix].d+'.png';a.href=c.toDataURL('image/png');a.click()};
-  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+  const overlay=document.getElementById('sumOverlay');
+  const btns=box.querySelector('.sum-btns');
+  const xBtn=box.querySelector('.sum-x');
+  // Hide buttons and expand to full height for capture
+  if(btns)btns.style.display='none';
+  if(xBtn)xBtn.style.display='none';
+  const origMaxH=box.style.maxHeight;
+  const origOvf=box.style.overflow;
+  const origOvfO=overlay.style.overflow;
+  const origOvfA=overlay.style.alignItems;
+  box.style.maxHeight='none';
+  box.style.overflow='visible';
+  overlay.style.overflow='visible';
+  overlay.style.alignItems='flex-start';
+  // Small delay for reflow
+  setTimeout(()=>{
+    html2canvas(box,{scale:3,backgroundColor:'#ffffff',useCORS:true,logging:false,scrollY:-window.scrollY,windowHeight:box.scrollHeight+100}).then(canvas=>{
+      box.style.maxHeight=origMaxH;box.style.overflow=origOvf;
+      overlay.style.overflow=origOvfO;overlay.style.alignItems=origOvfA;
+      if(btns)btns.style.display='';if(xBtn)xBtn.style.display='';
+      const a=document.createElement('a');
+      a.download='สรุปผลการผลิต_'+D[ix].d+'.png';
+      a.href=canvas.toDataURL('image/png',1.0);a.click();
+    }).catch(err=>{
+      box.style.maxHeight=origMaxH;box.style.overflow=origOvf;
+      overlay.style.overflow=origOvfO;overlay.style.alignItems=origOvfA;
+      if(btns)btns.style.display='';if(xBtn)xBtn.style.display='';
+      alert('ไม่สามารถบันทึกภาพได้: '+err.message);
+    });
+  },200);
 }
 
 // Visit counter - unique visits only
