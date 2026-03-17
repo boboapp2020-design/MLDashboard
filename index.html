@@ -535,44 +535,83 @@ function render(){
 
 function showSummary(){
   if(mode==='range')return alert('กรุณาเลือกโหมด "วันเดียว" เพื่อดูสรุปรายวัน');
-  const L=D[ix],isR=false;
+  const L=D[ix];
   const stopList=L.srmk&&L.srmk.length>0?L.srmk.map(s=>'• '+s.dept+': '+s.cause+' ('+s.dur_min+' นาที)').join('<br>'):'ไม่มีการหยุดหีบ ✅';
   const yieldKg=(typeof L.yt==='number'&&L.yt>0)?(L.yt*10).toFixed(1)+' kg/TC':'-';
-  
-  // Star rating logic
-  let stars=5,issues=[];
-  const ccs=typeof L.st==='number'?L.st:0,sx=typeof L.sx==='number'?L.sx:13.85;
+
+  // Values
+  const ccs=typeof L.st==='number'?L.st:0, sx=typeof L.sx==='number'?L.sx:13.85;
   const pur=typeof L.pur_t==='number'?L.pur_t:0;
   const me=typeof L.met==='number'?L.met:0;
   const bt=typeof L.bt==='number'?L.bt:0;
-  const yt=typeof L.yt==='number'?L.yt:0;
-  if(ccs<sx){stars-=0.5;issues.push('CCS ต่ำกว่าเป้า ('+f2(ccs)+' vs '+sx+')');}
-  if(ccs<sx-1)stars-=0.5;
-  if(pur<85){stars-=0.5;issues.push('Purity ต่ำ ('+f2(pur)+'%)');}
-  if(bt>5){stars-=0.5;issues.push('อ้อยไฟไหม้สูง ('+f2(bt)+'%)');}
-  if(bt>10)stars-=0.5;
-  if(me<95){stars-=0.5;issues.push('ME ต่ำ ('+f2(me)+'%)');}
-  if(me<85)stars-=0.5;
-  if(L.srmk&&L.srmk.length>2){stars-=0.5;issues.push('หยุดหีบหลายครั้ง ('+L.srmk.length+' ครั้ง)');}
-  stars=Math.max(0,Math.min(5,stars));
-  const fullStars=Math.floor(stars),halfStar=stars%1>=0.5?1:0,emptyStars=5-fullStars-halfStar;
-  const starHtml='★'.repeat(fullStars)+(halfStar?'⯪':'')+('☆').repeat(emptyStars);
-  const comment=issues.length===0?'ผลการผลิตดีเยี่ยม ทุกค่าเป็นไปตามเป้าหมาย':'ปัญหาหลัก: '+issues.join(', ');
-  
+  const tl=typeof L.tlt==='number'?L.tlt:0;
+  const ccsR=typeof L.trt==='number'?L.trt:0;
+  const steam=typeof L.ast==='number'?L.ast:0;
+
+  // Color function: target-based coloring
+  // lower-is-better: bt, tl, steam | higher-is-better: ccs, pur, me, ccsR
+  function vc(val,tgt,lowerBetter){
+    if(!val||!tgt)return'var(--p1)';
+    const diff=lowerBetter?(val-tgt):(tgt-val);
+    const pct=Math.abs(diff)/tgt*100;
+    if(diff<=0)return'#0d8f47'; // on/better than target = green
+    if(pct<5)return'#1976d2';   // close = blue
+    if(pct<15)return'#f59e0b';  // moderate = amber
+    return'#dc2626';             // far = red
+  }
+
+  // Score 10/10 logic (0.5 steps)
+  let score=10,issues=[],rootCauses=[];
+  if(ccs<sx){score-=0.5;issues.push('CCS ต่ำกว่าเป้า ('+f2(ccs)+' vs '+sx+')');}
+  if(ccs<sx-0.5)score-=0.5;
+  if(pur<85){score-=0.5;issues.push('Purity of First Juice ต่ำ ('+f2(pur)+'%) → คุณภาพอ้อยไม่ดี หรือ มีการย่อยสลาย Sucrose ก่อนเข้าหีบ');}
+  if(pur<80)score-=0.5;
+  if(bt>3){score-=0.5;issues.push('อ้อยไฟไหม้สูง ('+f2(bt)+'%) → ส่งผลให้ Purity ลด, Colour สูง, Recovery ต่ำ');}
+  if(bt>8)score-=0.5;
+  if(bt>15)score-=0.5;
+  if(tl>16.54){score-=0.5;issues.push('Total Loss สูง ('+f2(tl)+'%) → ตรวจสอบ Undetermined Loss และ Loss in Molasses');}
+  if(tl>20)score-=0.5;
+  if(me<98.67){score-=0.5;issues.push('ME ต่ำ ('+f2(me)+'%) → มีการหยุดเครื่องจักร ส่งผลต่อ Throughput');}
+  if(me<90)score-=0.5;
+  if(steam>450){score-=0.5;issues.push('Steam สูง ('+f2(steam)+' Kg/TC) → ประสิทธิภาพ Boiler หรือ Evaporator ต่ำ');}
+  if(ccsR<93){score-=0.5;issues.push('% CCS Recovery ต่ำ ('+f2(ccsR)+'%) → Sugar Loss สูงในกระบวนการผลิต');}
+  if(L.srmk&&L.srmk.length>2){score-=0.5;issues.push('หยุดหีบหลายครั้ง ('+L.srmk.length+' ครั้ง) → กระทบต่อ Capacity และ Steam Balance');}
+  score=Math.max(0,Math.min(10,score));
+
+  // Root cause analysis (Sugar Tech)
+  if(bt>5&&pur<85)rootCauses.push('อ้อยไฟไหม้สูงทำให้เกิดการย่อยสลาย Sucrose (Inversion) → Purity ลด → CCS ลด → Yield ลด เป็นผลกระทบแบบลูกโซ่');
+  if(bt>5&&ccs<sx)rootCauses.push('% Burnt Cane สูง ส่งผลโดยตรงต่อ CCS เนื่องจาก Dextran และ Colour ที่เพิ่มขึ้นจากการเผา');
+  if(tl>18&&ccsR<90)rootCauses.push('Total Loss สูงร่วมกับ % CCS Recovery ต่ำ → ตรวจสอบ Molasses Exhaustion, Undetermined Loss, และระบบ Crystallization');
+  if(me<90&&steam>500)rootCauses.push('ME ต่ำทำให้ Steam Balance ไม่สมดุล → Specific Steam Consumption สูง เพราะ Idle Load ขณะหยุดเครื่อง');
+  if(issues.length===0)rootCauses.push('ผลการผลิตดีเยี่ยม ทุกพารามิเตอร์เป็นไปตามเป้าหมาย');
+  if(rootCauses.length===0&&issues.length>0)rootCauses.push('ควรปรับปรุงตามประเด็นที่ระบุข้างต้น เพื่อเพิ่ม Overall Recovery');
+
+  // Score label & color
+  const labels=[{s:0,l:'แย่มาก',c:'#7f1d1d'},{s:3,l:'ปรับปรุง',c:'#dc2626'},{s:5,l:'พอใช้',c:'#f59e0b'},{s:6.5,l:'ดี',c:'#0d8f47'},{s:8,l:'ดีมาก',c:'#059669'},{s:9.5,l:'สุดยอด',c:'#047857'}];
+  let sLabel='สุดยอด',sColor='#047857';
+  for(let i=labels.length-1;i>=0;i--){if(score>=labels[i].s){sLabel=labels[i].l;sColor=labels[i].c;break}}
+
   document.getElementById('sumTitle').textContent='📋 สรุปผลการผลิต — '+L.d;
   document.getElementById('sumContent').innerHTML=`
     <div class="sum-row"><span class="sl">🏭 ปริมาณอ้อยเข้าหีบ</span><span class="sv">${fI(L.ct)} Tons</span></div>
-    <div class="sum-row"><span class="sl">🔥 อ้อยไฟไหม้</span><span class="sv" style="color:${bt>5?'var(--err)':'var(--ok)'}">${f2(L.bt)} %</span></div>
-    <div class="sum-row"><span class="sl">📊 C.C.S.</span><span class="sv">${f2(L.st)}</span></div>
-    <div class="sum-row"><span class="sl">🔬 Purity</span><span class="sv" style="color:#7c3aed">${f2(L.pur_t)} %</span></div>
-    <div class="sum-row"><span class="sl">📈 Yield</span><span class="sv">${yieldKg}</span></div>
-    <div class="sum-row"><span class="sl">🍬 น้ำตาลสะสม</span><span class="sv">${fI(L.twd)} Tons</span></div>
-    <div class="sum-row"><span class="sl">💨 Steam Average</span><span class="sv">${f2(L.ast)} Kg/TC</span></div>
-    <div class="sum-row"><span class="sl">⚡ ขายไฟ (KWH)</span><span class="sv">${fI(L.ket)}</span></div>
-    <div class="sum-row"><span class="sl">⚙️ M.E.</span><span class="sv">${f2(L.met)} %</span></div>
+    <div class="sum-row"><span class="sl">🔥 อ้อยไฟไหม้</span><span class="sv" style="color:${vc(bt,3,true)}">${f2(bt)} %</span></div>
+    <div class="sum-row"><span class="sl">📊 C.C.S.</span><span class="sv" style="color:${vc(ccs,sx,false)}">${f2(ccs)}</span></div>
+    <div class="sum-row"><span class="sl">🔬 Purity of First Juice</span><span class="sv" style="color:${vc(pur,85,false)}">${f2(pur)} %</span></div>
+    <div class="sum-row"><span class="sl">🍬 % CCS Recovery (Total Sugar)</span><span class="sv" style="color:${vc(ccsR,93,false)}">${f2(ccsR)} %</span></div>
+    <div class="sum-row"><span class="sl">📈 Yield</span><span class="sv" style="color:${vc(typeof L.yt==='number'?L.yt*10:0,128,false)}">${yieldKg}</span></div>
+    <div class="sum-row"><span class="sl">📉 Total Loss</span><span class="sv" style="color:${vc(tl,16.54,true)}">${f2(tl)} %</span></div>
+    <div class="sum-row"><span class="sl">💨 Steam Average</span><span class="sv" style="color:${vc(steam,450,true)}">${f2(steam)} Kg/TC</span></div>
     <div class="sum-row" style="flex-direction:column"><span class="sl">🛑 การหยุดหีบ</span><div style="font-size:11px;color:var(--tx2);margin-top:4px;line-height:1.8">${stopList}</div></div>
-    <div class="sum-stars">${starHtml} <span style="font-size:14px;font-weight:800;color:var(--warn)">${stars.toFixed(1)}/5</span></div>
-    <div class="sum-comment">${comment}</div>`;
+    <div class="sum-row"><span class="sl">⚙️ M.E.</span><span class="sv" style="color:${vc(me,98.67,false)}">${f2(me)} %</span></div>
+    <div style="border-top:2px solid var(--bdr);margin-top:6px;padding-top:8px">
+      <div class="sum-row"><span class="sl">🍬 น้ำตาลสะสม</span><span class="sv">${fI(L.twd)} Tons</span></div>
+      <div class="sum-row"><span class="sl">⚡ ขายไฟสะสม (KWH)</span><span class="sv">${fI(L.ked)}</span></div>
+    </div>
+    <div style="text-align:center;margin:16px 0 6px">
+      <div style="font-size:32px;font-weight:900;color:${sColor}">${score.toFixed(1)}<span style="font-size:16px;font-weight:600;color:var(--dim)">/10</span></div>
+      <div style="font-size:14px;font-weight:700;color:${sColor};margin-top:2px">${sLabel}</div>
+    </div>
+    <div class="sum-comment" style="text-align:left">${issues.length>0?'<b style="color:var(--err)">⚠️ ประเด็นที่ต้องปรับปรุง:</b><br>'+issues.map(i=>'• '+i).join('<br>')+'<br><br><b style="color:var(--p1)">🔍 วิเคราะห์สาเหตุ (Sugar Tech):</b><br>'+rootCauses.join('<br>'):'<b style="color:var(--ok)">✅ '+rootCauses[0]+'</b>'}</div>`;
   document.getElementById('sumOverlay').classList.add('show');
 }
 function closeSummary(){document.getElementById('sumOverlay').classList.remove('show')}
