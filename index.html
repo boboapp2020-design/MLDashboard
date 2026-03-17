@@ -182,7 +182,7 @@ function stab(i){curTab=i;document.querySelectorAll('.tab-b').forEach((b,j)=>b.c
     // Tab 1: add pre-crushing dates to dropdown
     const preDates=ST.filter(r=>r.pre&&r.d<D[0].d).map(r=>r.d);
     if(preDates.length>0&&!sel.querySelector('option[data-pre]')){
-      preDates.forEach(pd=>{const o=document.createElement('option');o.value='pre_'+pd;o.textContent=pd+'  —  ผลิตน้ำ (ก่อนหีบ)';o.setAttribute('data-pre','1');sel.insertBefore(o,sel.firstChild)});
+      preDates.sort().forEach((pd,i)=>{const o=document.createElement('option');o.value='pre_'+pd;o.textContent=pd+'  —  ผลิตน้ำ (ก่อนหีบ)';o.setAttribute('data-pre','1');if(i===0)sel.insertBefore(o,sel.firstChild);else sel.insertBefore(o,sel.querySelector('option:not([data-pre])'))});
     }
   } else {
     // Other tabs: remove pre-crushing options
