@@ -6,6 +6,7 @@
 <title>MITR LAO SUGAR — Executive Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
@@ -99,6 +100,7 @@ body{font-family:'Noto Sans Thai','Inter',system-ui,sans-serif;color:var(--tx);m
 .scroll-top{position:fixed;bottom:16px;right:16px;width:40px;height:40px;border-radius:50%;background:var(--p1);color:#fff;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 16px rgba(10,92,186,.3);z-index:50;transition:.2s}
 .scroll-top:hover{background:var(--pD);transform:translateY(-2px)}
 .scroll-top.show{display:flex}
+.ex-btn{position:absolute;top:0;right:32px;width:28px;height:28px;border-radius:7px;border:1px solid var(--bdr);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.4;transition:.2s;z-index:5;font-size:11px;color:var(--ok)}.ex-btn:hover{opacity:1;background:#f0fdf4}
 </style>
 </head>
 <body>
@@ -270,7 +272,7 @@ function render(){
       <div class="gw" style="flex:0 0 140px">${arcG(caneGV,caneTarget,isR?'รวม/เป้า':'สะสม/เป้า','Tons',140)}</div>
     </div>
   </div>
-  <div class="cd" style="flex:1"><div class="cd-t">ปริมาณอ้อยเข้าหีบรายวัน (Tons)</div>${chW('cc','อ้อยรายวัน')}</div>
+  <div class="cd" style="flex:1"><div class="cd-t">ปริมาณอ้อยเข้าหีบรายวัน (Tons)</div><div class="ch-box"><button class="sv-btn" onclick="saveChart('cc','อ้อยรายวัน')" title="บันทึกภาพ">💾</button><button class="ex-btn" onclick="exportExcel('cane')" title="Export Excel">📥</button><div class="cw"><canvas id="cc"></canvas></div></div></div>
 </div>
 <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px" class="mb">
   <div class="cd"><div class="cd-t">C.C.S.</div><div class="kv" style="color:var(--p1)">${isR?'-':f2(L.st)}</div><div class="kr"><span class="kt kt-b">${isR?'เฉลี่ย '+f2(avgK(S,'st')):'สะสม '+f2(L.sd)}</span><span class="kt kt-y">เป้า ${L.sx}</span></div></div>
@@ -279,9 +281,9 @@ function render(){
   <div class="cd"><div class="cd-t">% Burnt Cane</div><div class="kv" style="color:${!isR&&Number(L.bt)>5?'var(--err)':'var(--ok)'}">${isR?'-':f2(L.bt)}</div><div class="kr"><span class="kt kt-b">${isR?'เฉลี่ย '+f2(avgK(S,'bt')):'สะสม '+f2(L.bd)}</span><span class="kt kt-y">เป้า ${L.bx}</span></div></div>
   <div class="cd"><div class="cd-t">Yield</div><div class="kv" style="color:var(--warn)">${isR?'-':f2(L.yt)}</div><div class="kr"><span class="kt kt-b">${isR?'เฉลี่ย '+f2(avgK(S,'yt')):'สะสม '+f2(L.yd)}</span><span class="kt kt-y">เป้า ${f2(L.yx)}</span></div></div>
 </div>
-<div class="g2 mb"><div class="cd"><div class="cd-t">แนวโน้ม C.C.S.</div>${chW('k1','CCS')}</div><div class="cd"><div class="cd-t">แนวโน้ม Pol % Cane</div>${chW('k2','Pol')}</div></div>
+<div class="g2 mb"><div class="cd"><div class="cd-t">แนวโน้ม C.C.S.</div><div class="ch-box"><button class="sv-btn" onclick="saveChart('k1','CCS')" title="บันทึกภาพ">💾</button><button class="ex-btn" onclick="exportExcel('ccs')" title="Export Excel">📥</button><div class="cw"><canvas id="k1"></canvas></div></div></div><div class="cd"><div class="cd-t">แนวโน้ม Pol % Cane</div>${chW('k2','Pol')}</div></div>
 <div class="g2 mb"><div class="cd"><div class="cd-t">แนวโน้ม Purity (%)</div>${chW('k5','Purity')}</div><div class="cd"><div class="cd-t">แนวโน้ม % Burnt Cane</div>${chW('k3','Burnt')}</div></div>
-<div class="cd mb"><div class="cd-t">แนวโน้ม Yield</div>${chW('k4','Yield')}</div>
+<div class="cd mb"><div class="cd-t">แนวโน้ม Yield</div><div class="ch-box"><button class="sv-btn" onclick="saveChart('k4','Yield')" title="บันทึกภาพ">💾</button><button class="ex-btn" onclick="exportExcel('yield')" title="Export Excel">📥</button><div class="cw"><canvas id="k4"></canvas></div></div></div>
 
 <div class="sec"><div class="sec-i" style="background:var(--okBg)">🍬</div><div class="sec-t">TOTAL SUGAR</div><div class="sec-l"></div></div>
 <div class="cd mb"><table class="tb"><thead><tr><th style="text-align:left">Parameter</th><th>Today</th><th>${isR?'ช่วง':'To-Date'}</th><th>Target</th></tr></thead><tbody>
@@ -772,39 +774,69 @@ function showSummary(){
 function closeSummary(){document.getElementById('sumOverlay').classList.remove('show')}
 function saveSummary(){
   const box=document.getElementById('sumBox');
-  const overlay=document.getElementById('sumOverlay');
   const btns=box.querySelector('.sum-btns');
   const xBtn=box.querySelector('.sum-x');
-  // Hide buttons and expand to full height for capture
   if(btns)btns.style.display='none';
   if(xBtn)xBtn.style.display='none';
-  const origMaxH=box.style.maxHeight;
-  const origOvf=box.style.overflow;
-  const origOvfO=overlay.style.overflow;
-  const origOvfA=overlay.style.alignItems;
-  box.style.maxHeight='none';
-  box.style.overflow='visible';
-  overlay.style.overflow='visible';
-  overlay.style.alignItems='flex-start';
-  // Small delay for reflow
-  setTimeout(()=>{
-    html2canvas(box,{scale:3,backgroundColor:'#ffffff',useCORS:true,logging:false,scrollY:-window.scrollY,windowHeight:box.scrollHeight+100}).then(canvas=>{
-      box.style.maxHeight=origMaxH;box.style.overflow=origOvf;
-      overlay.style.overflow=origOvfO;overlay.style.alignItems=origOvfA;
-      if(btns)btns.style.display='';if(xBtn)xBtn.style.display='';
-      const a=document.createElement('a');
-      a.download='สรุปผลการผลิต_'+D[ix].d+'.png';
-      a.href=canvas.toDataURL('image/png',1.0);a.click();
-    }).catch(err=>{
-      box.style.maxHeight=origMaxH;box.style.overflow=origOvf;
-      overlay.style.overflow=origOvfO;overlay.style.alignItems=origOvfA;
-      if(btns)btns.style.display='';if(xBtn)xBtn.style.display='';
-      alert('ไม่สามารถบันทึกภาพได้: '+err.message);
+  
+  const clone=box.cloneNode(true);
+  clone.style.cssText='position:fixed;left:-9999px;top:0;width:1100px;max-height:none;overflow:visible;padding:28px 32px;border-radius:18px;background:#fff;font-family:Noto Sans Thai,Inter,system-ui,sans-serif';
+  
+  const content=clone.querySelector('#sumContent');
+  if(content){
+    const allRows=[...content.querySelectorAll('.sum-row')];
+    const borders=[...content.querySelectorAll('div[style*="border-top"]')];
+    const allDivs=[...content.children];
+    
+    // Collect data rows (before score)
+    let dataHtml='', scoreHtml='', foundScore=false;
+    allDivs.forEach(d=>{
+      const t=d.textContent||'';
+      if(t.includes('/10')||d.style.textAlign==='center'&&t.match(/\d+\.\d+/)) foundScore=true;
+      if(!foundScore) dataHtml+=d.outerHTML;
+      else scoreHtml+=d.outerHTML;
     });
-  },200);
+    
+    content.innerHTML='<div style="display:flex;gap:28px;align-items:flex-start"><div style="flex:1;min-width:0">'+dataHtml+'</div><div style="flex:1;min-width:0;border-left:2px solid #e2e8f0;padding-left:24px">'+scoreHtml+'</div></div>';
+  }
+  
+  // Remove close button from clone
+  const cloneX=clone.querySelector('.sum-x');if(cloneX)cloneX.remove();
+  const cloneBtns=clone.querySelector('.sum-btns');if(cloneBtns)cloneBtns.remove();
+  
+  document.body.appendChild(clone);
+  setTimeout(()=>{
+    html2canvas(clone,{scale:3,backgroundColor:'#ffffff',useCORS:true,logging:false}).then(canvas=>{
+      document.body.removeChild(clone);
+      if(btns)btns.style.display='';if(xBtn)xBtn.style.display='';
+      const a=document.createElement('a');a.download='สรุปผลการผลิต_'+D[ix].d+'.png';a.href=canvas.toDataURL('image/png',1.0);a.click();
+    }).catch(err=>{
+      document.body.removeChild(clone);
+      if(btns)btns.style.display='';if(xBtn)xBtn.style.display='';
+      alert('Error: '+err.message);
+    });
+  },300);
 }
 
 window.addEventListener('scroll',()=>{const b=document.getElementById('scrollTop');if(b)b.classList.toggle('show',window.scrollY>300)});
+
+function exportExcel(type){
+  var wb=XLSX.utils.book_new();var ws_data=[];
+  var WD=['2025-12-31','2026-01-01','2026-01-02','2026-02-04','2026-02-23'];
+  if(type==='cane'){
+    ws_data=[['วันที่','ปริมาณอ้อย (Tons)']];
+    D.forEach(function(r){ws_data.push([r.d,WD.indexOf(r.d)>=0?'ล้างเครื่อง':(r.ct||0)])});
+  }else if(type==='ccs'){
+    ws_data=[['วันที่','CCS Today','CCS To-Date','Target']];
+    D.forEach(function(r){ws_data.push([r.d,WD.indexOf(r.d)>=0?'ล้างเครื่อง':r.st,r.sd,typeof r.sx==='number'?r.sx:13.85])});
+  }else if(type==='yield'){
+    ws_data=[['วันที่','Yield Today','Yield To-Date','Target']];
+    D.forEach(function(r){ws_data.push([r.d,WD.indexOf(r.d)>=0?'ล้างเครื่อง':r.yt,r.yd,typeof r.yx==='number'?r.yx:0])});
+  }
+  var ws=XLSX.utils.aoa_to_sheet(ws_data);
+  XLSX.utils.book_append_sheet(wb,ws,type);
+  XLSX.writeFile(wb,'MitrLao_'+type+'_'+D[D.length-1].d+'.xlsx');
+}
 
 render();
 let sortDir='desc',sortDateDir='asc';
