@@ -631,7 +631,7 @@ function showSummary(){
   if(mode==='range')return alert('กรุณาเลือกโหมด "วันเดียว" เพื่อดูสรุปรายวัน');
   const L=D[ix];
   const isWashDay=getWashDays().has(L.d)||(L.ct===0||L.ct==='0');
-  const CAP=8000; // Mill Capacity 8,000 TC/day (Design Capacity)
+  const CAP=currentSeason==='2425'?6000:8000; // Mill Capacity: 2024/25=6,000, 2025/26=8,000 TC/day
 
   // Extract values
   const ct=typeof L.ct==='number'?L.ct:0;
