@@ -973,7 +973,8 @@ function showComparison(){
     "Average of Steam":L.asd,
     "Total Sugar":L.twd,
     "Final Molasses % Cane":L.fcd,
-    "ปริมาณขายไฟ (KWH)":L.ked
+    "ปริมาณขายไฟ (KWH)":L.ked,
+    "C.C.S_raw":L.sd,"COW":91.02,"% Pol Sugar":L.tpd,"% Moisture Sugar":L.tmd||0.079
   };
   var compSrc=document.getElementById('compData').value;
   compSrc=compSrc.replace('"2025/26":{}','"2025/26":'+JSON.stringify(live));
@@ -1055,12 +1056,20 @@ function filterCause(){
   --bg:#FAFAFF;--card:#FFFFFF;--border:#E9E5F5;
   --txt1:#1E1B4B;--txt2:#6B6394;--txt3:#9790B8;
   --ag:#10B981;--ar:#EF4444;
+  --ok-bg:#F0FDF4;--ok-bdr:#86EFAC;--ok-txt:#166534;
+  --warn-bg:#FFFBEB;--warn-bdr:#FCD34D;--warn-txt:#92400E;
+  --err-bg:#FEF2F2;--err-bdr:#FCA5A5;--err-txt:#991B1B;
+  --info-bg:#EFF6FF;--info-bdr:#93C5FD;--info-txt:#1E40AF;
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#13111C;--card:#1C1A29;--border:#2D2841;
   --txt1:#E8E5F5;--txt2:#9790B8;--txt3:#6B6394;
   --pri-50:#1C1A29;--pri-100:#2D2841;
   --ag:#34D399;--ar:#F87171;
+  --ok-bg:#052E16;--ok-bdr:#166534;--ok-txt:#4ADE80;
+  --warn-bg:#1C1307;--warn-bdr:#92400E;--warn-txt:#FCD34D;
+  --err-bg:#1F0B0B;--err-bdr:#991B1B;--err-txt:#FCA5A5;
+  --info-bg:#0F1D3D;--info-bdr:#1E40AF;--info-txt:#93C5FD;
 }}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'DM Sans','Sarabun',sans-serif;color:var(--txt1);background:transparent;padding:0}
@@ -1103,84 +1112,64 @@ tbody tr:hover td:first-child{background:var(--pri-50)}
 .cc h3{font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .ch{position:relative;width:100%;height:260px}
 .cst{font-size:14px;font-weight:600;color:var(--txt1);margin:0 0 14px 4px;display:flex;align-items:center;gap:8px}
-
-/* ===== RESPONSIVE ===== */
+/* Expert Analysis Styles */
+.exp-section{margin:32px 0 8px}
+.exp-title{font-size:18px;font-weight:700;color:var(--txt1);margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.exp-title-badge{background:linear-gradient(135deg,var(--pri-500),var(--pri-700));color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px}
+.exp-subtitle{font-size:12px;color:var(--txt3);margin-bottom:20px}
+.yr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:28px}
+.yr-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.yr-card-hdr{padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.yr-card-ttl{font-size:14px;font-weight:700;color:var(--txt1)}
+.yr-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.yr-card-body{padding:16px 18px}
+.yr-metric-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.yr-metric-row:last-child{border-bottom:none}
+.yr-metric-lbl{color:var(--txt2)}
+.yr-metric-val{font-weight:600;color:var(--txt1)}
+.pro-con-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.pro-list,.con-list{border-radius:10px;padding:10px 12px}
+.pro-list{background:var(--ok-bg);border:1px solid var(--ok-bdr)}
+.con-list{background:var(--err-bg);border:1px solid var(--err-bdr)}
+.pro-list h4{font-size:10px;font-weight:700;color:var(--ok-txt);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.con-list h4{font-size:10px;font-weight:700;color:var(--err-txt);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.pro-list li,.con-list li{font-size:11px;color:var(--txt2);margin-bottom:3px;padding-left:12px;position:relative;line-height:1.5}
+.pro-list li::before{content:'✓';position:absolute;left:0;color:var(--ag);font-weight:700}
+.con-list li::before{content:'✗';position:absolute;left:0;color:var(--ar)}
+.verdict{background:var(--info-bg);border:1px solid var(--info-bdr);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--info-txt);margin-top:10px;line-height:1.6}
+.verdict strong{font-weight:700}
+.rating-bar{display:flex;gap:3px;margin-top:4px}
+.rating-dot{width:10px;height:10px;border-radius:50%}
+.rd-fill{background:var(--pri-500)}.rd-empty{background:var(--border)}
+.rating-label{font-size:10px;color:var(--txt3);margin-left:4px}
+.overall-box{background:var(--card);border:2px solid var(--pri-300);border-radius:16px;padding:20px 22px;margin-bottom:24px}
+.overall-box h3{font-size:15px;font-weight:700;color:var(--pri-700);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.overall-table{width:100%;font-size:12px;border-collapse:collapse}
+.overall-table th{text-align:left;color:var(--txt3);font-weight:500;padding:4px 8px;font-size:11px;border-bottom:1px solid var(--border)}
+.overall-table td{padding:6px 8px;border-bottom:1px solid var(--border)}
+.overall-table tr:last-child td{border-bottom:none}
+.score-pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.score-a{background:#D1FAE5;color:#065F46}.score-b{background:#DBEAFE;color:#1E3A8A}.score-c{background:#FEF9C3;color:#92400E}.score-d{background:#FEE2E2;color:#991B1B}
+@media(prefers-color-scheme:dark){.score-a{background:#052E16;color:#4ADE80}.score-b{background:#0F1D3D;color:#93C5FD}.score-c{background:#1C1307;color:#FCD34D}.score-d{background:#1F0B0B;color:#FCA5A5}}
 @media(max-width:768px){
-  .hdr{padding:12px 14px}
-  .hdr-t h1{font-size:14px}
-  .hdr-t p,.hdr-sub{font-size:9px}
-  .hdr-logo{width:36px;height:36px;border-radius:8px}
-  .hdr-b{gap:4px}
-  .bdg{padding:5px 8px;font-size:9px;min-width:auto}
-  .bdg .vl{font-size:12px !important}
-  .bdg .lb{font-size:8px}
-  .logout-btn{padding:5px 8px;font-size:9px}
-  .tabs{gap:3px;padding:0 8px;flex-wrap:wrap}
-  .tab-b{padding:7px 10px !important;font-size:10px !important}
-  .fr{flex-direction:column}
-  .g2,.g3{grid-template-columns:1fr !important}
-  [style*='grid-template-columns:repeat(5']{grid-template-columns:repeat(2,1fr) !important}
-  [style*='grid-template-columns:repeat(3']{grid-template-columns:1fr !important}
-  .cd{padding:14px 12px}
-  .kv{font-size:22px}
-  .kv-s{font-size:16px}
-  .cd-t{font-size:11px}
-  .sec{margin-bottom:12px}
-  .sec-t{font-size:12px}
-  table{font-size:10px}
-  table th,table td{padding:6px 8px}
-  .sum-box{padding:18px 14px;max-width:98vw}
-  .sum-row .sl{font-size:10px}
-  .sum-row .sv{font-size:11px}
-  .sum-comment{font-size:10px !important}
-  .ch-box{min-height:180px}
-  .cw{height:180px}
-  .scroll-top{width:36px;height:36px;font-size:16px;bottom:10px;right:10px}
+  .topbar{padding:10px 14px}.topbar h1{font-size:14px}.ts{border-radius:10px}.tsh{padding:10px 14px}.tsh h2{font-size:12px}
+  table{font-size:11px;min-width:600px}th,td{padding:8px 10px}th:first-child,td:first-child{min-width:140px;width:140px;font-size:10px}
+  .cg{grid-template-columns:1fr !important}.cc{padding:12px 14px}.cc h3{font-size:11px}.ch{height:220px}
+  .spark{width:60px;height:18px}.thd{min-width:70px;width:70px}.yt{font-size:9px;padding:1px 5px}
+  .yr-grid{grid-template-columns:1fr !important}.pro-con-grid{grid-template-columns:1fr !important}
 }
-@media(max-width:480px){
-  .hdr-b{flex-direction:row;flex-wrap:wrap;justify-content:center}
-  .bdg{flex:0 0 auto}
-  [style*='grid-template-columns:repeat(5']{grid-template-columns:1fr !important}
-  .kv{font-size:20px}
-  .tabs{justify-content:center}
-  .tab-b{font-size:9px !important;padding:6px 8px !important}
-}
-
-@media(max-width:768px){
-  .topbar{padding:10px 14px}
-  .topbar h1{font-size:14px}
-  .ts{border-radius:10px}
-  .tsh{padding:10px 14px}
-  .tsh h2{font-size:12px}
-  table{font-size:11px;min-width:600px}
-  th,td{padding:8px 10px}
-  th:first-child,td:first-child{min-width:140px;width:140px;font-size:10px}
-  .cg{grid-template-columns:1fr !important}
-  .cc{padding:12px 14px}
-  .cc h3{font-size:11px}
-  .ch{height:220px}
-  .spark{width:60px;height:18px}
-  .thd{min-width:70px;width:70px}
-  .yt{font-size:9px;padding:1px 5px}
-}
-@media(max-width:480px){
-  table{min-width:500px;font-size:10px}
-  th,td{padding:6px 8px}
-  th:first-child,td:first-child{min-width:110px;width:110px;font-size:9px}
-  .ch{height:200px}
-  .cg{gap:10px}
-}
+@media(max-width:480px){table{min-width:500px;font-size:10px}th,td{padding:6px 8px}th:first-child,td:first-child{min-width:110px;width:110px;font-size:9px}.ch{height:200px}.cg{gap:10px}}
 </style>
 
 <div class="topbar">
 <div class="topbar-left">
 <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/></svg></div>
-<h1>ตารางเปรียบเทียบแต่ละปี</h1>
+<h1>ตารางเปรียบเทียบแต่ละปี & วิเคราะห์ผลการผลิต</h1>
 </div>
 </div>
 
 <div class="ts">
-<div class="tsh"><span class="dot"></span><h2>Production parameters</h2></div>
+<div class="tsh"><span class="dot"></span><h2>Production Parameters — 6 ปีการผลิต</h2></div>
 <div class="tw">
 <table><thead><tr>
 <th>Parameter</th>
@@ -1197,7 +1186,68 @@ tbody tr:hover td:first-child{background:var(--pri-50)}
 <div class="cst"><span class="dot"></span>Trend analysis</div>
 <div class="cg" id="cg"></div>
 
-<script>
+<!-- EXPERT ANALYSIS SECTION -->
+<div class="exp-section">
+  <div class="exp-title">🔬 Expert Analysis <span class="exp-title-badge">Sugar Engineering</span></div>
+  <div class="exp-subtitle">วิเคราะห์ผลการผลิตโดยใช้หลักการ Sugar Engineering (Hugot & Rein) — ประเมิน Extraction, C.C.S, Losses, Boiling House Performance</div>
+  <div class="overall-box">
+    <h3>📊 ภาพรวมการจัดอันดับ 6 ปีการผลิต</h3>
+    <table class="overall-table" id="overall-tbl"></table>
+  </div>
+  <div class="yr-grid" id="yr-analysis"></div>
+</div>
+
+
+<div class="cst" style="margin-top:28px"><span class="dot"></span>Expert Analysis — Sugar Technology</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;border-left:5px solid #EC4899">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+  <div><span style="font-size:16px;font-weight:800;color:#EC4899">2025/26</span>
+    <span style="font-size:11px;color:var(--txt2);margin-left:8px">น้ำตาล 69,525 ตัน | อ้อย 581,528 ตัน (89.5% ของเป้า)</span></div>
+  <span style="font-size:10px;font-weight:700;color:#EF4444;background:#EF444418;padding:3px 10px;border-radius:6px">ต้องปรับปรุง</span>
+</div>
+<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">🏭 ปริมาณอ้อยและคุณภาพ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ อ้อยเข้าหีบ 581,528 ตัน (89.5%) — ใกล้เป้าหมาย 650,000 ตัน</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ CCS 13.81 ใกล้เป้า 13.85 — Pol % Cane 15.28 สอดคล้อง</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ อ้อยไฟไหม้ 4.48% เกินเป้า <3% — ส่งผลให้ Non-sugars เพิ่ม Purity ลด</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">ℹ️ Purity of 1st Juice 85.73% — อยู่ในเกณฑ์ที่ยอมรับได้</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">⚗️ ประสิทธิภาพกระบวนการ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">❌ Overall Recovery 77.75% ต่ำมาก — สูญเสียน้ำตาลในกระบวนการสูง</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">❌ BHR 78.99% ต่ำกว่าเป้า 86.04% อย่างมาก — Boiling House มีปัญหา</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">❌ % CCS Recovery 86.55% ต่ำ — Crystallization ไม่มีประสิทธิภาพ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ 96 Pol 90.97% — ควรจะได้ >95% ตรวจสอบ Boiling Scheme</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">📉 การสูญเสีย (Total Loss 22.25% vs เป้า 16.54%)</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">❌ Undetermined Loss 9.19% สูงกว่าเป้า 5.49% — อาจเกิดจาก Sucrose Inversion ในหม้อระเหย, pH ต่ำ, หรือ Microbial Degradation</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">❌ Loss in Final Molasses 9.59% สูงกว่าเป้า 7.72% — Purity of FM สูง 36.62% แสดงว่า Molasses ยังมีน้ำตาลเหลืออยู่มาก ต้องปรับปรุง Exhaustion</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ Loss in Bagasse 2.99% ใกล้เป้า 3% — Extraction ดี</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">⚡ พลังงานและเครื่องจักร</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">❌ Steam 526.74 Kg/TC สูงมาก — ตรวจสอบ Evaporator Scaling, Vapor Bleeding, Steam Trap</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">❌ M.E. 94.01% ต่ำ — หยุดเครื่องบ่อย ส่งผลให้ Steam/TC สูงจาก Idle Load</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ ขายไฟ 10.86M KWH (66.9% ของเป้า 16.23M) — กำลังผลิตไฟฟ้ายังไม่เต็มศักยภาพ</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">💡 คำแนะนำหลัก</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">🔧 เร่งแก้ไข Undetermined Loss — ตรวจ pH ของน้ำอ้อยก่อนเข้าหม้อระเหย ป้องกัน Inversion</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">🔧 ปรับปรุง Boiling Scheme เพื่อลด Purity of Final Molasses ให้ต่ำกว่า 33%</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">🔧 เพิ่ม Preventive Maintenance ลด Unplanned Downtime เพื่อเพิ่ม M.E.</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">🔧 ล้าง Evaporator ตรวจ Approach Temp เพื่อลด Steam Consumption</div></div>
+</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;border-left:5px solid #7C3AED">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+  <div><span style="font-size:16px;font-weight:800;color:#7C3AED">2024/25</span>
+    <span style="font-size:11px;color:var(--txt2);margin-left:8px">น้ำตาล 63,353 ตัน | อ้อย 504,680 ตัน (87.0% ของเป้า)</span></div>
+  <span style="font-size:10px;font-weight:700;color:#10B981;background:#10B98118;padding:3px 10px;border-radius:6px">ดี</span>
+</div>
+<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">🏭 ปริมาณอ้อยและคุณภาพ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ อ้อยเข้าหีบ 504,680 ตัน (87%) — ต่ำกว่าเป้า 580,000 ตัน</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ CCS 13.70 — คุณภาพอ้อยอยู่ในเกณฑ์ดี</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ อ้อยไฟไหม้ 5.24% — ยังสูงกว่าเป้า <3%</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">ℹ️ Purity of 1st Juice 84.92%</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">⚗️ ประสิทธิภาพกระบวนการ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ Overall Recovery 81.83% — ดีกว่า 2025/26 อย่างมาก</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ BHR 83.04% — Boiling House ทำงานมีประสิทธิภาพ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ % CCS Recovery 91.62% — Recovery ดี</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ 96 Pol 96.24% — ใกล้เป้าดีมาก</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">📉 การสูญเสีย (Total Loss 18.17% vs เป้า 15.85%)</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ Loss in Final Molasses 9.61% สูงกว่าเป้า 7.10% — FM Purity 34.92%</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ Undetermined Loss 5.10% ใกล้เป้า 5.26%</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ Loss in Bagasse 2.97% ต่ำกว่าเป้า 3.20%</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">⚡ พลังงานและเครื่องจักร</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ Steam 458.53 Kg/TC — Thermal Economy ดีเยี่ยม</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ M.E. 99.40% สูงมาก — เครื่องจักรเดินต่อเนื่อง เกือบไม่มีหยุด</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ ขายไฟ 7.10M KWH (99.7% ของเป้า 7.13M) — เกือบถึงเป้า</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">💡 คำแนะนำ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">🔧 เพิ่มปริมาณอ้อยเข้าโรงงาน — ปัญหาหลักคือ Supply ไม่ถึงเป้า</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">🔧 ปรับปรุง Molasses Exhaustion ลด FM Purity ให้ต่ำกว่า 33%</div></div>
+</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;border-left:5px solid #3B82F6">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+  <div><span style="font-size:16px;font-weight:800;color:#3B82F6">2023/24</span>
+    <span style="font-size:11px;color:var(--txt2);margin-left:8px">น้ำตาล 61,537 ตัน | อ้อย 487,665 ตัน (88.7% ของเป้า)</span></div>
+  <span style="font-size:10px;font-weight:700;color:#10B981;background:#10B98118;padding:3px 10px;border-radius:6px">ดีมาก</span>
+</div>
+<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">🏭 ปริมาณอ้อยและคุณภาพ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ อ้อยไฟไหม้ 3.65% ใกล้เป้า — ดีกว่า 2024/25 และ 2025/26</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ CCS 13.64 — Extraction 97.21% สูงที่สุดใน 5 ปี</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">⚗️ ประสิทธิภาพกระบวนการ</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ BHR 83.22% — ดีที่สุดใน 3 ปีที่มีข้อมูล</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ % CCS Recovery 92.52% สูงสุดใน 5 ปี</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ 96 Pol 97.53% สูงสุดใน 5 ปี — Boiling House มีประสิทธิภาพมาก</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ Undetermined Loss 3.97% ต่ำที่สุดใน 3 ปีที่มีข้อมูล</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">📉 การสูญเสีย</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">❌ Loss in Final Molasses 10.67% สูงสุดใน 3 ปี — FM Purity 36.91% สูง</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ Total Loss 17.68% สูงกว่าเป้า 14.27% — ส่วนใหญ่มาจาก Molasses Loss</div></div><div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">⚡ พลังงาน</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ Steam 493.33 Kg/TC — สูงกว่า 2024/25 แต่ดีกว่า 2025/26</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ ขายไฟ 8.39M KWH เกินเป้า 7.63M — ผลิตไฟฟ้าดี</div></div>
+</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;border-left:5px solid #10B981">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+  <div><span style="font-size:16px;font-weight:800;color:#10B981">2022/23</span>
+    <span style="font-size:11px;color:var(--txt2);margin-left:8px">น้ำตาล 77,514 ตัน (สูงสุด) | อ้อย 570,000 ตัน</span></div>
+  <span style="font-size:10px;font-weight:700;color:#F59E0B;background:#F59E0B18;padding:3px 10px;border-radius:6px">ดี (ข้อมูลจำกัด)</span>
+</div>
+<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">🏭 ภาพรวม</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ CCS 14.88 — สูงอันดับ 2 แสดงว่าคุณภาพอ้อยดีมาก</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ Yield 13.60% สูงสุดใน 5 ปี — สอดคล้องกับ CCS ที่สูง</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ น้ำตาล 77,514 ตัน สูงสุดใน 5 ปี — ผลจากอ้อยมาก+คุณภาพดี</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ % CCS Recovery 91.89%</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ ข้อมูล ME, Steam, Losses ไม่พร้อม — ไม่สามารถวิเคราะห์เชิงลึกได้</div></div>
+</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;border-left:5px solid #F59E0B">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+  <div><span style="font-size:16px;font-weight:800;color:#F59E0B">2021/22</span>
+    <span style="font-size:11px;color:var(--txt2);margin-left:8px">น้ำตาล 55,515 ตัน | อ้อย 420,000 ตัน</span></div>
+  <span style="font-size:10px;font-weight:700;color:#10B981;background:#10B98118;padding:3px 10px;border-radius:6px">คุณภาพอ้อยดีเยี่ยม</span>
+</div>
+<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">🏭 ภาพรวม</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ CCS 15.01 สูงสุดใน 5 ปี — คุณภาพอ้อยดีที่สุด Pol 16.21%</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ Yield 13.22%</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ % CCS Recovery 88.08% ต่ำ — แม้คุณภาพอ้อยดี แต่ Recovery ไม่ดี</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ 96 Pol 94.84% ต่ำกว่า 2023/24 — สูญเสียน้ำตาลใน Process</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">ℹ️ ปริมาณอ้อยน้อย 420,000 ตัน — จำกัดผลผลิตรวม</div></div>
+</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;border-left:5px solid #EF4444">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+  <div><span style="font-size:16px;font-weight:800;color:#EF4444">2020/21</span>
+    <span style="font-size:11px;color:var(--txt2);margin-left:8px">น้ำตาล 46,300 ตัน | อ้อย 350,000 ตัน</span></div>
+  <span style="font-size:10px;font-weight:700;color:#94a3b8;background:#94a3b818;padding:3px 10px;border-radius:6px">ข้อมูลจำกัด</span>
+</div>
+<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:var(--txt1);margin-bottom:3px">🏭 ภาพรวม</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">✅ CCS 14.00 — คุณภาพอ้อยดี</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">⚠️ ปริมาณอ้อยน้อยที่สุด 350,000 ตัน — จำกัดผลผลิตรวม</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">ℹ️ น้ำตาล 46,300 ตัน — ต่ำสุดใน 5 ปี เนื่องจากอ้อยน้อย</div><div style="padding:2px 0;font-size:11px;line-height:1.7;color:var(--txt2)">ℹ️ ข้อมูล ME, Steam, Losses, Recovery ไม่มี — Sheet ต่างจากปีอื่น</div></div>
+</div>
+</div><script>
 const D={"2025/26":{},"2024/25":{"Final Molasses % Cane":4.86,"อ้อย (Tons Cane)":504680.22,"% อ้อยเข้าหีบ":87.01,"% Burnt Cane":5.24,"C.C.S":13.70,"% CCS":91.62,"Yield % Cane":12.55,"Extraction":97.03,"M.E":99.40,"Purified of 1st Juice":84.92,"Total Loss":18.17,"Loss in Bagasse (%)":2.97,"Loss in Filter Cake (%)":0.48,"Loss in Final Molasses (%)":9.61,"Undetermined Losses (%)":5.10,"Purity Molasses":34.92,"Average of Steam":458.53,"Total Sugar":63353.00,"ปริมาณขายไฟ (KWH)":7103802},"2023/24":{"Final Molasses % Cane":5.06,"อ้อย (Tons Cane)":487665.16,"% อ้อยเข้าหีบ":88.67,"% Burnt Cane":3.65,"C.C.S":13.64,"% CCS":92.52,"Yield % Cane":12.62,"Extraction":97.21,"M.E":98.80,"Purified of 1st Juice":84.31,"Total Loss":17.68,"Loss in Bagasse (%)":2.77,"Loss in Filter Cake (%)":0.28,"Loss in Final Molasses (%)":10.67,"Undetermined Losses (%)":3.97,"Purity Molasses":36.91,"Average of Steam":493.33,"Total Sugar":61537.40,"ปริมาณขายไฟ (KWH)":8388461},"2022/23":{"Final Molasses % Cane":4.35,"อ้อย (Tons Cane)":562058.68,"% อ้อยเข้าหีบ":98.61,"% Burnt Cane":11.12,"C.C.S":15.10,"% CCS":88.72,"Yield % Cane":13.40,"Extraction":97.28,"M.E":97.62,"Purified of 1st Juice":87.54,"Total Loss":18.70,"Loss in Bagasse (%)":2.72,"Loss in Filter Cake (%)":0.26,"Loss in Final Molasses (%)":8.58,"Undetermined Losses (%)":7.13,"Purity Molasses":37.35,"Average of Steam":472.69,"Total Sugar":75308.68,"ปริมาณขายไฟ (KWH)":5610579},"2021/22":{"Final Molasses % Cane":3.38,"อ้อย (Tons Cane)":414982.00,"% อ้อยเข้าหีบ":98.81,"% Burnt Cane":2.89,"C.C.S":14.88,"% CCS":91.42,"Yield % Cane":13.61,"Extraction":97.01,"M.E":98.62,"Purified of 1st Juice":88.11,"Total Loss":15.84,"Loss in Bagasse (%)":2.99,"Loss in Filter Cake (%)":0.22,"Loss in Final Molasses (%)":6.76,"Undetermined Losses (%)":5.87,"Purity Molasses":37.19,"Average of Steam":497.04,"Total Sugar":56471.78,"ปริมาณขายไฟ (KWH)":6315489},"2020/21":{"Final Molasses % Cane":3.76,"อ้อย (Tons Cane)":337001.11,"% อ้อยเข้าหีบ":96.29,"% Burnt Cane":0.57,"C.C.S":15.13,"% CCS":88.57,"Yield % Cane":13.40,"Extraction":97.12,"M.E":99.47,"Purified of 1st Juice":88.45,"Total Loss":18.31,"Loss in Bagasse (%)":2.86,"Loss in Filter Cake (%)":0.42,"Loss in Final Molasses (%)":7.67,"Undetermined Losses (%)":7.36,"Purity Molasses":38.69,"Average of Steam":500.41,"Total Sugar":45156.19,"ปริมาณขายไฟ (KWH)":4331361}};
 const Y=["2025/26","2024/25","2023/24","2022/23","2021/22","2020/21"],YR=Y.slice().reverse();
 const P=[
@@ -1229,7 +1279,6 @@ h+=`<td class="sc">${spk(vs)}</td>`;tr.innerHTML=h;tb.appendChild(tr)});
 const gc=dk?'rgba(167,139,250,0.08)':'rgba(124,58,237,0.05)',tc=dk?'#9790B8':'#6B6394',bf={family:"'DM Sans','Sarabun',sans-serif"};
 const pl=dk?['#A78BFA','#60A5FA','#34D399','#FBBF24','#F87171','#F9A8D4']:['#7C3AED','#3B82F6','#10B981','#F59E0B','#EF4444','#EC4899'];
 const CY=["2020/21","2021/22","2022/23","2023/24","2024/25","2025/26"];
-
 const bo={responsive:true,maintainAspectRatio:false,
   plugins:{legend:{display:false},
     tooltip:{backgroundColor:dk?'#2D2841':'#fff',titleColor:dk?'#E8E5F5':'#1E1B4B',bodyColor:dk?'#9790B8':'#6B6394',borderColor:dk?'#3D3856':'#E9E5F5',borderWidth:1,padding:10,cornerRadius:8,titleFont:{...bf,weight:'600'},bodyFont:bf}},
@@ -1238,36 +1287,27 @@ const bo={responsive:true,maintainAspectRatio:false,
     y:{grid:{color:gc,drawBorder:false},ticks:{color:tc,font:{size:11,...bf}},border:{display:false}}
   }};
 
-
-function saveCompChart(id,title){
-  var canvas=document.getElementById(id);
-  if(!canvas)return;
-  var a=document.createElement('a');
-  a.download='comparison_'+title+'.png';
-  a.href=canvas.toDataURL('image/png',1.0);
-  a.click();
-}
+function saveCompChart(id,title){var canvas=document.getElementById(id);if(!canvas)return;var a=document.createElement('a');a.download='comparison_'+title+'.png';a.href=canvas.toDataURL('image/png',1.0);a.click();}
 const cfs=[
-{id:'c1',t:'% อ้อยเข้าหีบ',k:'% อ้อยเข้าหีบ',cl:pl[2]},
-{id:'c2',t:'% Burnt Cane',k:'% Burnt Cane',cl:pl[4]},
-{id:'c3',t:'C.C.S',k:'C.C.S',cl:pl[0]},
-{id:'c4',t:'% CCS',k:'% CCS',cl:pl[3]},
-{id:'c5',t:'Yield % Cane',k:'Yield % Cane',cl:pl[2]},
-{id:'c6',t:'Losses breakdown (%)',k:'_stack'},
-{id:'c7',t:'Extraction',k:'Extraction',cl:pl[0]},
-{id:'c8',t:'Purified of 1st Juice',k:'Purified of 1st Juice',cl:pl[1]},
-{id:'c9',t:'Total Sugar (ตัน)',k:'Total Sugar',cl:pl[1]},
-{id:'c10',t:'ปริมาณขายไฟ (KWH)',k:'ปริมาณขายไฟ (KWH)',cl:pl[3]}
+{id:'c1',t:'อ้อย (Tons Cane)',k:'อ้อย (Tons Cane)',cl:pl[1]},
+{id:'c2',t:'% อ้อยเข้าหีบ',k:'% อ้อยเข้าหีบ',cl:pl[2]},
+{id:'c3',t:'% Burnt Cane',k:'% Burnt Cane',cl:pl[4]},
+{id:'c4',t:'C.C.S',k:'C.C.S',cl:pl[0]},
+{id:'c5',t:'% CCS',k:'% CCS',cl:pl[3]},
+{id:'c6',t:'Yield % Cane',k:'Yield % Cane',cl:pl[2]},
+{id:'c7',t:'Losses breakdown (%)',k:'_stack'},
+{id:'c8',t:'Extraction',k:'Extraction',cl:pl[0]},
+{id:'c9',t:'Final Molasses % Cane',k:'Final Molasses % Cane',cl:pl[4]},
+{id:'c10',t:'Purified of 1st Juice',k:'Purified of 1st Juice',cl:pl[1]},
+{id:'c11',t:'Total Sugar (ตัน)',k:'Total Sugar',cl:pl[1]},
+{id:'c12',t:'ปริมาณขายไฟ (KWH)',k:'ปริมาณขายไฟ (KWH)',cl:pl[3]}
 ];
-
 const cg=document.getElementById('cg');
 cfs.forEach(cf=>{
-  const d=document.createElement('div');
-  d.className='cc';
+  const d=document.createElement('div');d.className='cc';
   d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><h3>${cf.t}</h3><button onclick="saveCompChart('${cf.id}','${cf.t}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:var(--txt2)">💾</button></div><div class="ch"><canvas id="${cf.id}"></canvas></div>`;
   cg.appendChild(d);
 });
-
 cfs.forEach(cf=>{
 const x=document.getElementById(cf.id);
 if(cf.k==='_stack'){
@@ -1280,15 +1320,13 @@ new Chart(x,{type:'bar',data:{labels:CY,datasets:[
 }else{
 const vals=CY.map(y=>D[y][cf.k]||null);
 var fmtLabel;
-if(cf.k==='Total Sugar')fmtLabel=function(v){return(v/1000).toFixed(0)+'k'};
+if(cf.k==='Total Sugar'||cf.k==='อ้อย (Tons Cane)')fmtLabel=function(v){return(v/1000).toFixed(0)+'k'};
 else if(cf.k.includes('KWH'))fmtLabel=function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k'};
 else fmtLabel=function(v){return typeof v==='number'?v.toFixed(2):v};
 new Chart(x,{type:'line',data:{labels:CY,datasets:[{label:cf.t,data:vals,borderColor:cf.cl,backgroundColor:cf.cl+'22',tension:.35,pointRadius:6,pointBackgroundColor:CY.map((_,i)=>pl[i%pl.length]),pointBorderColor:dk?'#1C1A29':'#fff',pointBorderWidth:2.5,fill:true,borderWidth:2.5}]},
-options:{...bo,plugins:{...bo.plugins,
-  datalabels:{display:false}
-},scales:{...bo.scales,
+options:{...bo,plugins:{...bo.plugins,datalabels:{display:false}},scales:{...bo.scales,
   y:(function(){var ys={grid:{color:gc,drawBorder:false},ticks:{color:tc,font:{size:11,...bf}},border:{display:false}};
-    if(cf.k==='Total Sugar')ys.ticks.callback=function(v){return(v/1000).toFixed(0)+'k'};
+    if(cf.k==='Total Sugar'||cf.k==='อ้อย (Tons Cane)')ys.ticks.callback=function(v){return(v/1000).toFixed(0)+'k'};
     else if(cf.k.includes('KWH'))ys.ticks.callback=function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k'};
     return ys})()
 }},
@@ -1308,7 +1346,244 @@ plugins:[{afterDatasetsDraw:function(chart){
   });
 }}]
 });
-}})
+}});
+
+// ========== EXPERT ANALYSIS ENGINE ==========
+const ANALYSIS = {
+  "2025/26": {
+    yr: "2025/26", badge:"yn", label:"ปีปัจจุบัน",
+    score: "B+", scoreClass:"score-b",
+    headline: "ปีที่ดีที่สุดด้านปริมาณอ้อย — แต่ CCS ต่ำ",
+    metrics: [
+      {l:"Tons Cane (TO-DATE)", v:"581,528 ตัน"},
+      {l:"CCS (TO-DATE)", v:"13.81"},
+      {l:"Sugar Yield (TO-DATE)", v:"24,203 ตัน"},
+      {l:"COW (kg/tc)", v:"91.02 kg/tc"},
+      {l:"% Extraction (Kb)", v:"97.18"},
+      {l:"% Pol Sugar (TO-DATE)", v:"99.70%"},
+      {l:"% Moisture Sugar", v:"0.079%"},
+    ],
+    pros: [
+      "ปริมาณอ้อยสูงที่สุดในรอบ 6 ปี (581,528 ตัน)",
+      "% Burnt Cane ต่ำเพียง 4.48% — อ้อยคุณภาพดี",
+      "% Moisture น้อยที่สุด (0.079%) — น้ำตาลแห้งดี",
+      "Pol % >=99.7 ตลอด — คุณภาพน้ำตาลสม่ำเสมอ",
+      "Juice pH control ดี — First Juice >5.3"
+    ],
+    cons: [
+      "C.C.S ต่ำสุดในรอบ 6 ปี (13.81) — อ้อยมีน้ำตาลน้อย",
+      "COW เพียง 91.02 kg/tc — ต่ำกว่าทุกปี (Hugot: ควร >95)",
+      "Sugar Yield รวมต่ำ (24,203 ตัน) เพราะ CCS ต่ำ",
+      "Undetermined Loss ยังสูง — ต้องลด heat/chemical loss"
+    ],
+    verdict: "<strong>CCS ต่ำ</strong> เป็นปัญหาหลักของปีนี้ — สะท้อนว่าอ้อยเข้าหีบมี maturity ต่ำหรือถูกเก็บเกี่ยวก่อนกำหนด ตามหลัก Rein CCS <14 ถือว่า below optimal สำหรับโรงน้ำตาลแห่งนี้ อย่างไรก็ตาม <strong>ปริมาณอ้อยสูงสุด</strong> ทำให้ภาพรวมยังยอมรับได้"
+  },
+  "2024/25": {
+    yr: "2024/25", badge:"y0", label:"ปีก่อน",
+    score: "B+", scoreClass:"score-b",
+    headline: "สมดุลดี — Extraction & Losses อยู่ในเกณฑ์",
+    metrics: [
+      {l:"Tons Cane", v:"504,680 ตัน"},
+      {l:"CCS", v:"13.70"},
+      {l:"Sugar Total", v:"63,353 ตัน"},
+      {l:"COW (kg/tc)", v:"96.31 kg/tc"},
+      {l:"% Extraction (Kb)", v:"97.20"},
+      {l:"M.E.", v:"99.40%"},
+      {l:"Total Loss", v:"18.17%"}
+    ],
+    pros: [
+      "COW = 96.31 kg/tc — ดีกว่าหลายปี (Hugot benchmark)",
+      "M.E. 99.4% — Mechanical Extraction ดีมาก",
+      "% Burnt Cane 5.24% — ควบคุมได้ในระดับพอใช้",
+      "Total Sugar 63,353 ตัน — สูงสุดในรอบ 4 ปีหลัง",
+      "Loss in Filter Cake ต่ำ (0.48%) — กรองดี"
+    ],
+    cons: [
+      "CCS ต่ำ (13.70) — อ้อยคุณภาพต่ำต่อเนื่องจาก 2023/24",
+      "% อ้อยเข้าหีบเพียง 87% — Cane supply ต่ำกว่าเป้า",
+      "Undetermined Losses 5.10% — ยังสูงเกิน 4%",
+      "Purity Molasses ต่ำ (34.92) — น้ำตาลตกค้างในกาก"
+    ],
+    verdict: "ปีที่มีผลผลิตน้ำตาล<strong>สูงสุดใน 4 ปีหลัง</strong> แม้ CCS ต่ำ แต่ปริมาณอ้อยที่มากและ Boiling House Efficiency ที่ดี (M.E.=99.4%) ช่วยชดเชยได้ Purity Molasses ต่ำบ่งบอกว่า <strong>Crystallization ทำได้ดี</strong> ดึงน้ำตาลออกจากกากน้ำตาลได้มาก"
+  },
+  "2023/24": {
+    yr: "2023/24", badge:"y1", label:"",
+    score: "A-", scoreClass:"score-a",
+    headline: "ปีที่ดีสุดด้าน Loss Control & Electricity Revenue",
+    metrics: [
+      {l:"Tons Cane", v:"487,665 ตัน"},
+      {l:"CCS", v:"13.64"},
+      {l:"Sugar Total", v:"61,537 ตัน"},
+      {l:"COW (kg/tc)", v:"97.68 kg/tc"},
+      {l:"% Extraction", v:"97.21"},
+      {l:"M.E.", v:"98.80%"},
+      {l:"ขายไฟ (KWH)", v:"8,388,461"}
+    ],
+    pros: [
+      "COW สูงสุด = 97.68 kg/tc — ประสิทธิภาพดีที่สุดในรอบ 6 ปี",
+      "Total Loss ต่ำสุดในรอบ 6 ปี (17.68%)",
+      "Undetermined Loss ต่ำที่สุด (3.97%) — Process clean",
+      "ขายไฟสูงสุด 8.4M KWH — Bagasse ใช้ประสิทธิภาพดี",
+      "% Burnt Cane ต่ำ 3.65% — อ้อยสดคุณภาพดี"
+    ],
+    cons: [
+      "CCS ต่ำสุด (13.64) ในรอบ 6 ปี — ปัญหา CCS เริ่มชัด",
+      "Loss in Final Molasses สูงที่สุด (10.67%)",
+      "Purity Molasses 36.91 — ยังมีน้ำตาลค้างในกากมาก",
+      "% อ้อยเข้าหีบ 88.67% — ต่ำกว่าเป้า"
+    ],
+    verdict: "ปีที่มี<strong>ประสิทธิภาพโดยรวมดีที่สุด</strong> โดยเฉพาะ COW และ Total Loss ที่ต่ำที่สุด ตามแนวทาง Hugot Loss in Final Molasses สูง 10.67% แสดงว่า <strong>Crystallization ยังมีปัญหา</strong> — ควรปรับ Massecuite concentration หรือ Seeding protocol"
+  },
+  "2022/23": {
+    yr: "2022/23", badge:"y2", label:"",
+    score: "B", scoreClass:"score-b",
+    headline: "ปริมาณอ้อยสูงสุด — แต่ Burnt Cane พุ่งสูงมาก",
+    metrics: [
+      {l:"Tons Cane", v:"562,059 ตัน"},
+      {l:"CCS", v:"15.10"},
+      {l:"Sugar Total", v:"75,309 ตัน"},
+      {l:"COW (kg/tc)", v:"93.50 kg/tc"},
+      {l:"% Extraction", v:"97.28"},
+      {l:"M.E.", v:"97.62%"},
+      {l:"% Burnt Cane", v:"11.12%"}
+    ],
+    pros: [
+      "CCS สูง 15.10 — อ้อยมีน้ำตาลสูงที่สุดในรอบ 6 ปี",
+      "Total Sugar สูงสุด 75,309 ตัน — Record production",
+      "ปริมาณอ้อยเข้าหีบมาก 562,059 ตัน (อันดับ 2)",
+      "% อ้อยเข้าหีบ 98.6% — Supply เกือบเต็ม capacity",
+      "Extraction 97.28% — ดีสุดในรอบ 6 ปี"
+    ],
+    cons: [
+      "% Burnt Cane 11.12% — สูงมากผิดปกติ เกิน Standard ≤5%",
+      "M.E. 97.62% — ต่ำสุดใน 6 ปี (Rein: ควร >98.5%)",
+      "Undetermined Loss สูง 7.13% — Process หลายจุดรั่ว",
+      "Total Loss 18.70% — สูงกว่าค่าเฉลี่ย",
+      "COW ต่ำ 93.50 kg/tc — ประสิทธิภาพต่ำแม้ CCS ดี"
+    ],
+    verdict: "ปีที่ผลิตน้ำตาล<strong>มากที่สุดในรอบ 6 ปี</strong> (75,309 ตัน) เพราะ CCS สูงและอ้อยมาก แต่<strong>Burnt Cane 11% เป็นสัญญาณอันตราย</strong> — อ้อยไฟไหม้ทำให้ Inversion Loss สูง Impurity เพิ่ม ส่งผลต่อ Clarification และ Crystallization ตาม Hugot ทุก 1% Burnt Cane เพิ่ม Processing Loss ราว 0.05-0.1%"
+  },
+  "2021/22": {
+    yr: "2021/22", badge:"y3", label:"",
+    score: "A", scoreClass:"score-a",
+    headline: "ปีที่ดีที่สุดด้าน Total Loss & Sugar Quality",
+    metrics: [
+      {l:"Tons Cane", v:"414,982 ตัน"},
+      {l:"CCS", v:"14.88"},
+      {l:"Sugar Total", v:"56,472 ตัน"},
+      {l:"COW (kg/tc)", v:"96.87 kg/tc"},
+      {l:"% Extraction", v:"97.01"},
+      {l:"M.E.", v:"98.62%"},
+      {l:"Total Loss", v:"15.84%"}
+    ],
+    pros: [
+      "Total Loss ต่ำที่สุด 15.84% — Process efficiency ยอดเยี่ยม",
+      "CCS 14.88 — อ้อยคุณภาพสูง",
+      "% Burnt Cane ต่ำ 2.89% — อ้อยสดเกือบทั้งหมด",
+      "COW = 96.87 kg/tc — ดีมาก",
+      "Final Molasses % ต่ำสุด 3.38% — กากน้ำตาลน้อย"
+    ],
+    cons: [
+      "ปริมาณอ้อยต่ำสุด (414,982 ตัน) รองจากปี 2020/21",
+      "% อ้อยเข้าหีบ 98.81% — เกือบเต็ม แต่ capacity ยังน้อย",
+      "Total Sugar 56,472 ตัน — จำกัดด้วยปริมาณอ้อย",
+      "Undetermined Loss 5.87% — ยังค่อนข้างสูง"
+    ],
+    verdict: "ปีที่มี<strong>Process Efficiency ดีที่สุด</strong> Total Loss เพียง 15.84% และ Burnt Cane ต่ำสุด สะท้อนการจัดการ Harvesting & Milling ที่เป็นเลิศ ข้อจำกัดเดียวคือ<strong>ปริมาณอ้อยน้อย</strong> หากมีอ้อยมากเท่าปี 2022/23 จะเป็นปีที่ดีที่สุดในประวัติศาสตร์โรงงาน"
+  },
+  "2020/21": {
+    yr: "2020/21", badge:"y4", label:"",
+    score: "B", scoreClass:"score-b",
+    headline: "ปีแรก — CCS สูง แต่ปริมาณอ้อยน้อยมาก",
+    metrics: [
+      {l:"Tons Cane", v:"337,001 ตัน"},
+      {l:"CCS", v:"15.13"},
+      {l:"Sugar Total", v:"45,156 ตัน"},
+      {l:"COW (kg/tc)", v:"93.47 kg/tc"},
+      {l:"% Extraction", v:"97.12"},
+      {l:"M.E.", v:"99.47%"},
+      {l:"% Burnt Cane", v:"0.57%"}
+    ],
+    pros: [
+      "CCS สูง 15.13 — อ้อยน้ำตาลสูงมาก (อันดับ 2)",
+      "% Burnt Cane ต่ำสุดทุกปี (0.57%) — อ้อยสดทั้งหมด",
+      "M.E. 99.47% — Mechanical Extraction ดีที่สุดในรอบ 6 ปี",
+      "Purity Molasses สูงสุด 38.69% — Crystallization ยังปรับปรุงได้"
+    ],
+    cons: [
+      "ปริมาณอ้อยน้อยที่สุด (337,001 ตัน) — Cane Base ยังน้อย",
+      "Total Sugar 45,156 ตัน — น้อยสุด",
+      "COW 93.47 kg/tc — ต่ำ ทั้งที่ CCS ดี (Rein: Process Issue)",
+      "Total Loss 18.31% — สูง แสดงว่า Boiling House ยังไม่ optimize",
+      "Undetermined Loss 7.36% — สูงมาก ปีเปิดโรงงาน"
+    ],
+    verdict: "ปีเริ่มต้น โรงงานอยู่ในช่วง<strong>ปรับตัว (Commissioning Phase)</strong> CCS สูงมากสะท้อนคุณภาพอ้อยในพื้นที่ที่ดี แต่ Undetermined Loss 7.36% และ COW ต่ำแสดงว่า Process ยังไม่ stable ตามหลัก Rein โรงงานใหม่มักต้องใช้เวลา 2-3 ปีเพื่อ optimize Boiling House"
+  }
+};
+
+// Render Overall Summary Table
+const yrOrder = ["2020/21","2021/22","2022/23","2023/24","2024/25","2025/26"];
+const badges = {
+  "2025/26": {cls:"yn", lbl:"2025/26"},
+  "2024/25": {cls:"y0", lbl:"2024/25"},
+  "2023/24": {cls:"y1", lbl:"2023/24"},
+  "2022/23": {cls:"y2", lbl:"2022/23"},
+  "2021/22": {cls:"y3", lbl:"2021/22"},
+  "2020/21": {cls:"y4", lbl:"2020/21"}
+};
+const overallTbl = document.getElementById('overall-tbl');
+overallTbl.innerHTML = `<thead><tr>
+  <th>ปีการผลิต</th>
+  <th>เกรด</th>
+  <th>จุดเด่น</th>
+  <th>จุดด้อย</th>
+  <th>CCS</th>
+  <th>Total Sugar</th>
+</tr></thead><tbody id="overall-body"></tbody>`;
+const ob = document.getElementById('overall-body');
+const displayOrder = ["2021/22","2023/24","2025/26","2024/25","2022/23","2020/21"];
+displayOrder.forEach(yr => {
+  const a = ANALYSIS[yr], b = badges[yr], d = D[yr];
+  const ccs = d && d['C.C.S'] ? d['C.C.S'].toFixed(2) : (yr==='2025/26'?'13.81':'—');
+  const ts = d && d['Total Sugar'] ? (d['Total Sugar']/1000).toFixed(1)+'k' : (yr==='2025/26'?'24.2k':'—');
+  const row = document.createElement('tr');
+  row.innerHTML = `<td><span class="yt ${b.cls}">${b.lbl}</span></td>
+    <td><span class="score-pill ${a.scoreClass}">${a.score}</span></td>
+    <td style="font-size:11px;white-space:normal;max-width:200px;color:var(--txt2)">${a.pros[0]}</td>
+    <td style="font-size:11px;white-space:normal;max-width:200px;color:var(--txt2)">${a.cons[0]}</td>
+    <td style="font-weight:600">${ccs}</td>
+    <td style="font-weight:600">${ts}</td>`;
+  ob.appendChild(row);
+});
+
+// Render Year Cards
+const yrDiv = document.getElementById('yr-analysis');
+["2025/26","2024/25","2023/24","2022/23","2021/22","2020/21"].forEach(yr => {
+  const a = ANALYSIS[yr], b = badges[yr];
+  const card = document.createElement('div');
+  card.className = 'yr-card';
+  let metricsHtml = a.metrics.map(m => `<div class="yr-metric-row"><span class="yr-metric-lbl">${m.l}</span><span class="yr-metric-val">${m.v}</span></div>`).join('');
+  let prosHtml = a.pros.map(p => `<li>${p}</li>`).join('');
+  let consHtml = a.cons.map(c => `<li>${c}</li>`).join('');
+  card.innerHTML = `
+    <div class="yr-card-hdr">
+      <div class="yr-card-ttl">${a.headline}</div>
+      <span class="yt ${b.cls}">${b.lbl}</span>
+    </div>
+    <div class="yr-card-body">
+      ${metricsHtml}
+      <div class="pro-con-grid" style="margin-top:12px">
+        <div class="pro-list"><h4>✅ จุดดี</h4><ul style="list-style:none">${prosHtml}</ul></div>
+        <div class="con-list"><h4>❌ จุดด้อย</h4><ul style="list-style:none">${consHtml}</ul></div>
+      </div>
+      <div class="verdict">🔬 <strong>วิเคราะห์โดยผู้เชี่ยวชาญ:</strong> ${a.verdict}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+        <div class="rating-bar">${Array.from({length:5},(_, i)=>`<div class="rating-dot ${i < ({'A':5,'A-':4,'B+':4,'B':3,'C':2}[a.score[0]+a.score.slice(1)]||3)?'rd-fill':'rd-empty'}"></div>`).join('')}</div>
+        <span style="font-size:11px;color:var(--txt3)">Overall: <strong style="color:var(--txt1)">${a.score}</strong></span>
+      </div>
+    </div>`;
+  yrDiv.appendChild(card);
+});
 </script>
 </textarea>
 </body>
