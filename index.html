@@ -114,9 +114,17 @@ body.green-theme .nb:hover{background:var(--p2);border-color:var(--p2)}
 body.green-theme .mode-toggle button.active{background:var(--p1)}
 body.green-theme .login-overlay{background:linear-gradient(135deg,#064e2b 0%,#0d7c3e 30%,#16a34a 60%,#22c55e 100%)}
 
-body.purple-theme{--p1:#7c3aed;--p2:#8b5cf6;--p3:#a78bfa;--pD:#5b21b6}
-body.purple-theme .hdr{background:linear-gradient(135deg,#4c1d95 0%,#6d28d9 30%,#7c3aed 60%,#8b5cf6 100%)}
-body.purple-theme .tab-b.active{background:linear-gradient(135deg,#7c3aed,#8b5cf6);box-shadow:0 3px 12px rgba(124,58,237,.3)}
+#compOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg,#FAFAFF);z-index:10000;overflow-y:auto}
+#compOverlay.show{display:block}
+.comp-back{position:fixed;top:16px;right:20px;z-index:10001;background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.3);transition:.2s}
+.comp-back:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,58,237,.4)}
+
+#compOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;background:#FAFAFF}
+#compOverlay.show{display:block}
+#compFrame{width:100%;height:100%;border:none}
+.comp-back{position:fixed;top:16px;right:20px;z-index:10001;background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.3);transition:.2s;display:none}
+.comp-back:hover{transform:translateY(-2px)}
+#compOverlay.show+.comp-back,#compOverlay.show~.comp-back{display:block}
 </style>
 </head>
 <body>
@@ -163,7 +171,7 @@ body.purple-theme .tab-b.active{background:linear-gradient(135deg,#7c3aed,#8b5cf
     <button class="tab-b season-btn active" data-season="2526" onclick="switchSeason('2526')" style="background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;font-size:10px">2025/26</button>
     <button class="tab-b season-btn" data-season="2425" onclick="switchSeason('2425')" style="font-size:10px">2024/25</button>
     <span style="width:1px;height:24px;background:var(--bdr2);margin:0 4px"></span>
-    <button class="tab-b" onclick="stab(3)" style="font-size:10px;background:rgba(147,51,234,.1);color:#7c3aed">📊 เปรียบเทียบ 5 ปี</button>
+    <button class="tab-b" onclick="showComparison()" style="font-size:10px;background:rgba(147,51,234,.1);color:#7c3aed">📊 เปรียบเทียบย้อนหลัง</button>
   </div>
   <div class="dbar">
     <div class="mode-toggle">
@@ -900,118 +908,51 @@ function exportExcel(type){
   XLSX.writeFile(wb,'MitrLao_'+type+'_'+D[D.length-1].d+'.xlsx');
 }
 
-const COMP_DATA={"2024/25": {"cane_d": 504680.22, "cane_pct": 87.01, "ccs": 13.7018, "ccs_r": 91.6166, "yield_val": 12.5531, "extraction": 97.0274, "me": 99.4008, "purity": 84.9194, "total_loss": 18.1652, "loss_bag": 2.9732, "loss_fc": 0.482, "loss_fm": 9.609, "loss_ud": 5.101, "fm_cane": 4.8622, "fm_purity": 34.9177, "steam": 458.5311, "sugar": 63353.003, "edl": 7103802}, "2023/24": {"cane_d": 487665.159, "cane_pct": 88.67, "ccs": 13.6392, "ccs_r": 92.5183, "yield_val": 12.6188, "extraction": 97.206, "me": 98.7961, "purity": 84.3094, "total_loss": 17.6837, "loss_bag": 2.77, "loss_fc": 0.2768, "loss_fm": 10.671, "loss_ud": 3.9658, "fm_cane": 5.0582, "fm_purity": 36.914, "steam": 493.3308, "sugar": 61537.395, "edl": 8388461}, "2022/23": {"cane_d": 570000, "cane_pct": null, "ccs": 14.88, "ccs_r": 91.89, "yield_val": 13.6, "extraction": 97.0, "me": null, "purity": null, "total_loss": null, "loss_bag": null, "loss_fc": null, "loss_fm": null, "loss_ud": null, "fm_cane": null, "fm_purity": null, "steam": null, "sugar": 77514, "edl": null}, "2021/22": {"cane_d": 420000, "cane_pct": null, "ccs": 15.01, "ccs_r": 88.08, "yield_val": 13.22, "extraction": 96.99, "me": null, "purity": null, "total_loss": null, "loss_bag": null, "loss_fc": null, "loss_fm": null, "loss_ud": null, "fm_cane": null, "fm_purity": null, "steam": null, "sugar": 55515, "edl": null}, "2020/21": {"cane_d": 350000, "cane_pct": null, "ccs": 14, "ccs_r": null, "yield_val": null, "extraction": 97.0, "me": null, "purity": null, "total_loss": null, "loss_bag": null, "loss_fc": null, "loss_fm": null, "loss_ud": null, "fm_cane": null, "fm_purity": null, "steam": null, "sugar": 46300, "edl": null}};
 
-function render5Year(){
-  // Get 2025/26 live data from D array
-  const lastD=D_2526[D_2526.length-1];
-  const live={
-    cane_d:lastD.cd, cane_pct:lastD.cx?Math.round(lastD.cd/lastD.cx*10000)/100:0,
-    ccs:lastD.sd, ccs_r:lastD.trd, yield_val:lastD.yd,
-    extraction:lastD.ord, me:lastD.med, purity:lastD.pur_d,
-    total_loss:lastD.tld, loss_bag:lastD.lbd, loss_fc:lastD.lfd, loss_fm:lastD.lmd, loss_ud:lastD.udd,
-    fm_cane:lastD.fcd, fm_purity:lastD.fpd, steam:lastD.asd,
-    sugar:lastD.twd, edl:lastD.ked
+function showComparison(){
+  var L=D_2526[D_2526.length-1];
+  var live={
+    "อ้อย (Tons Cane)":L.cd,
+    "% อ้อยเข้าหีบ":L.cx?Math.round(L.cd/L.cx*10000)/100:0,
+    "% Burnt Cane":L.bd,
+    "C.C.S":L.sd,
+    "% CCS":L.trd,
+    "Yield % Cane":L.yd,
+    "Extraction":L.ord,
+    "M.E":L.med,
+    "Purified of 1st Juice":L.pur_d,
+    "Total Loss":L.tld,
+    "Loss in Bagasse (%)":L.lbd,
+    "Loss in Filter Cake (%)":L.lfd,
+    "Loss in Final Molasses (%)":L.lmd,
+    "Undetermined Losses (%)":L.udd,
+    "Purity Molasses":L.fpd,
+    "Average of Steam":L.asd,
+    "Total Sugar":L.twd,
+    "ปริมาณขายไฟ (KWH)":L.ked
   };
-  const years=['2025/26','2024/25','2023/24','2022/23','2021/22'];
-  const dataMap={'2025/26':live,...COMP_DATA};
-  const colors=['#1976d2','#16a34a','#ea580c','#7c3aed','#e11d48'];
-  const bgColors=['#eff6ff','#f0fdf4','#fff7ed','#faf5ff','#fff1f2'];
-
-  const params=[
-    {key:'cane_pct',label:'อ้อย (%)',unit:'%',higher:true},
-    {key:'ccs',label:'C.C.S.',unit:'',higher:true},
-    {key:'ccs_r',label:'% CCS Recovery',unit:'%',higher:true},
-    {key:'yield_val',label:'Yield % Cane',unit:'%',higher:true},
-    {key:'extraction',label:'Extraction',unit:'%',higher:true},
-    {key:'me',label:'M.E.',unit:'%',higher:true},
-    {key:'purity',label:'Purity of 1st Juice',unit:'%',higher:true},
-    {key:'total_loss',label:'Total Loss',unit:'%',higher:false,expandable:true},
-    {key:'loss_bag',label:'Loss in Bagasse',unit:'%',higher:false,sub:true},
-    {key:'loss_fc',label:'Loss in Filter Cake',unit:'%',higher:false,sub:true},
-    {key:'loss_fm',label:'Loss in Final Molasses',unit:'%',higher:false,sub:true},
-    {key:'loss_ud',label:'Undetermined Losses',unit:'%',higher:false,sub:true},
-    {key:'fm_cane',label:'Final Molasses % Cane',unit:'%',higher:false},
-    {key:'fm_purity',label:'Purity Molasses',unit:'',higher:false},
-    {key:'steam',label:'Average of Steam',unit:'Kg/TC',higher:false},
-    {key:'sugar',label:'Total Sugar',unit:'Tons',higher:true,fmt:'int'},
-    {key:'edl',label:'ปริมาณขายไฟ',unit:'KWH',higher:true,fmt:'int'},
-  ];
-
-  function fv(v,fmt){if(v==null)return'<span style="color:#94a3b8">-</span>';if(fmt==='int')return Number(v).toLocaleString();return Number(v).toFixed(2)}
-
-  // Find best value per row
-  function bestIdx(key,higher){
-    const vals=years.map(y=>dataMap[y]?dataMap[y][key]:null).filter(v=>v!=null&&v>0);
-    if(!vals.length)return-1;
-    const best=higher?Math.max(...vals):Math.min(...vals);
-    return years.findIndex(y=>dataMap[y]&&Math.abs((dataMap[y][key]||0)-best)<0.001);
-  }
-
-  // Build sparkline SVG
-  function spark(key){
-    const vals=years.map(y=>dataMap[y]?dataMap[y][key]:null).reverse();
-    const valid=vals.filter(v=>v!=null&&v>0);
-    if(valid.length<2)return'';
-    const mn=Math.min(...valid),mx=Math.max(...valid);
-    const range=mx-mn||1;
-    const pts=vals.map((v,i)=>{if(v==null||v<=0)return null;return[i*22,(1-(v-mn)/range)*24]}).filter(p=>p);
-    if(pts.length<2)return'';
-    const d='M'+pts.map(p=>p[0]+','+p[1]).join('L');
-    const up=valid[valid.length-1]>=valid[0];
-    return'<svg width="110" height="28" viewBox="-2 -2 114 32"><path d="'+d+'" fill="none" stroke="'+(up?'#16a34a':'#dc2626')+'" stroke-width="2.5" stroke-linecap="round"/></svg>';
-  }
-
-  let html=`<div style="padding:12px 0">
-    <h2 style="text-align:center;color:var(--p1);font-size:18px;font-weight:800;margin-bottom:16px">📊 เปรียบเทียบผลการผลิตของ 5 ปีล่าสุด</h2>
-    <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--bdr)">
-    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:800px">
-    <thead><tr style="position:sticky;top:0;z-index:2">
-      <th style="background:#f8fafc;padding:12px 14px;text-align:left;font-weight:700;border-bottom:2px solid var(--bdr);min-width:160px;position:sticky;left:0;z-index:3">Parameter</th>`;
-  years.forEach((y,i)=>{html+=`<th style="background:${bgColors[i]};padding:12px 10px;text-align:center;font-weight:700;color:${colors[i]};border-bottom:2px solid var(--bdr);min-width:100px">${y}</th>`});
-  html+=`<th style="background:#f8fafc;padding:12px 10px;text-align:center;font-weight:700;border-bottom:2px solid var(--bdr);min-width:120px">Trend</th></tr></thead><tbody>`;
-
-  params.forEach(p=>{
-    const bi=bestIdx(p.key,p.higher);
-    const isSub=p.sub;
-    const isExp=p.expandable;
-    const hideClass=isSub?'class="loss-sub" style="display:none"':'';
-    html+=`<tr ${hideClass} ${isExp?'style="cursor:pointer" onclick="document.querySelectorAll(\'.loss-sub\').forEach(r=>r.style.display=r.style.display===\'none\'?\'\':\'none\')"':''}>
-      <td style="padding:10px 14px;font-weight:${isSub?'400':'600'};color:${isSub?'var(--tx2)':'var(--tx)'};border-bottom:1px solid var(--bdr);background:#fff;position:sticky;left:0;z-index:1;${isSub?'padding-left:28px':''}">
-        ${isExp?'▶ ':''}${p.label}${p.unit?' <span style="color:var(--dim);font-weight:400">('+p.unit+')</span>':''}</td>`;
-    years.forEach((y,i)=>{
-      const v=dataMap[y]?dataMap[y][p.key]:null;
-      const isBest=i===bi&&v!=null&&v>0;
-      html+=`<td style="padding:10px;text-align:center;border-bottom:1px solid var(--bdr);background:${bgColors[i]};font-weight:${isBest?'800':'500'};color:${isBest?colors[i]:'var(--tx)'};${isBest?'font-size:13px':''}">${fv(v,p.fmt)}</td>`;
-    });
-    html+=`<td style="padding:6px 10px;text-align:center;border-bottom:1px solid var(--bdr);background:#fff">${isSub?'':spark(p.key)}</td></tr>`;
-  });
-
-  html+=`</tbody></table></div>`;
-
-  // Large comparison charts
-  const chartParams=[
-    {key:'ccs',label:'C.C.S.'},
-    {key:'yield_val',label:'Yield % Cane'},
-    {key:'sugar',label:'Total Sugar (Tons)'},
-    {key:'ccs_r',label:'% CCS Recovery'},
-  ];
-  html+=`<div class="g2" style="margin-top:20px">`;
-  chartParams.forEach(cp=>{
-    html+=`<div class="cd"><div class="cd-t">${cp.label} — 5 ปี</div><div style="height:220px"><canvas id="cmp_${cp.key}"></canvas></div></div>`;
-  });
-  html+=`</div></div>`;
-
-  document.getElementById('t3').innerHTML=html;
-
-  // Render bar charts
-  chartParams.forEach(cp=>{
-    const vals=years.map(y=>dataMap[y]?dataMap[y][cp.key]:0);
-    const el=document.getElementById('cmp_'+cp.key);
-    if(!el)return;
-    new Chart(el,{type:'bar',data:{labels:years,datasets:[{data:vals,backgroundColor:colors.map(c=>c+'cc'),borderColor:colors,borderWidth:2,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(15,23,42,.92)',titleColor:'#f8fafc',bodyColor:'#e2e8f0',padding:10,cornerRadius:8}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(226,232,240,.5)'},beginAtZero:false}}}});
-  });
+  var compSrc=document.getElementById('compData').value;
+  compSrc=compSrc.replace('"2025/26":{}','"2025/26":'+JSON.stringify(live));
+  var fullHtml='<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">';
+  fullHtml+='<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">';
+  fullHtml+='<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"><\/script>';
+  fullHtml+='</head><body style="background:#FAFAFF;padding:16px;max-width:1200px;margin:0 auto">';
+  fullHtml+=compSrc;
+  fullHtml+='</body></html>';
+  var frame=document.getElementById('compFrame');
+  frame.srcdoc=fullHtml;
+  document.getElementById('compOverlay').classList.add('show');
+  document.getElementById('compBackBtn').style.display='block';
+  document.body.style.overflow='hidden';
 }
+function hideComparison(){
+  document.getElementById('compOverlay').classList.remove('show');
+  document.getElementById('compBackBtn').style.display='none';
+  document.body.style.overflow='';
+  document.getElementById('compFrame').srcdoc='';
+}
+
+
 
 render();
 let sortDir='desc',sortDateDir='asc';
@@ -1054,5 +995,169 @@ function filterCause(){
   });
 }
 </script>
+
+</div>
+
+<div id="compOverlay"><iframe id="compFrame"></iframe></div>
+<button class="comp-back" id="compBackBtn" onclick="hideComparison()">← กลับ Dashboard</button>
+
+<textarea id="compData" style="display:none"><style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+:root {
+  --pri-50:#F5F3FF;--pri-100:#EDE9FE;--pri-200:#DDD6FE;--pri-300:#C4B5FD;
+  --pri-400:#A78BFA;--pri-500:#8B5CF6;--pri-600:#7C3AED;--pri-700:#6D28D9;--pri-800:#5B21B6;--pri-900:#4C1D95;
+  --bg:#FAFAFF;--card:#FFFFFF;--border:#E9E5F5;
+  --txt1:#1E1B4B;--txt2:#6B6394;--txt3:#9790B8;
+  --ag:#10B981;--ar:#EF4444;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#13111C;--card:#1C1A29;--border:#2D2841;
+  --txt1:#E8E5F5;--txt2:#9790B8;--txt3:#6B6394;
+  --pri-50:#1C1A29;--pri-100:#2D2841;
+  --ag:#34D399;--ar:#F87171;
+}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans','Sarabun',sans-serif;color:var(--txt1);background:transparent;padding:0}
+.topbar{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--pri-500),var(--pri-700));display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:20px;height:20px}
+.topbar h1{font-size:17px;font-weight:600;color:var(--txt1);letter-spacing:-0.3px}
+.ts{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px}
+.tsh{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.tsh h2{font-size:14px;font-weight:600;color:var(--txt1)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--pri-500)}
+.tw{width:100%;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:960px;font-size:13px}
+th,td{padding:10px 14px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--border)}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;z-index:2;background:var(--card);min-width:200px;width:200px;font-weight:500}
+thead th{position:sticky;top:0;z-index:3;background:var(--pri-50);font-weight:600;font-size:12px;color:var(--pri-800);letter-spacing:.3px;border-bottom:2px solid var(--pri-200)}
+@media(prefers-color-scheme:dark){thead th{color:var(--pri-300)}}
+thead th:first-child{z-index:4;background:var(--pri-50)}
+tbody tr:hover td{background:var(--pri-50)}
+tbody tr:hover td:first-child{background:var(--pri-50)}
+.yt{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin-bottom:2px}
+.y0{background:#7C3AED22;color:var(--pri-700)}.yn{background:#EC489922;color:#BE185D}.y1{background:#3B82F622;color:#2563EB}.y2{background:#10B98122;color:#059669}.y3{background:#F59E0B22;color:#B45309}.y4{background:#EF444422;color:#DC2626}
+@media(prefers-color-scheme:dark){.y0{color:#C4B5FD}.yn{color:#F9A8D4}.y1{color:#93C5FD}.y2{color:#6EE7B7}.y3{color:#FCD34D}.y4{color:#FCA5A5}}
+.sr td{background:var(--pri-50)!important;font-weight:600;font-size:11px;color:var(--pri-700);text-transform:uppercase;letter-spacing:.8px;padding:8px 14px}
+@media(prefers-color-scheme:dark){.sr td{color:var(--pri-300)}}
+.sr td:first-child{background:var(--pri-50)!important}
+.at{cursor:pointer;user-select:none}
+.at td:first-child{font-weight:600}
+.at td:first-child::before{content:'';display:inline-block;width:0;height:0;border-left:5px solid var(--pri-500);border-top:4px solid transparent;border-bottom:4px solid transparent;margin-right:8px;transition:transform .25s}
+.at.open td:first-child::before{transform:rotate(90deg)}
+.subr{display:none}.subr.vis{display:table-row}
+.subr td{font-size:12px;color:var(--txt2)}.subr td:first-child{padding-left:32px;font-weight:400;color:var(--txt2)}
+.best{font-weight:600;color:var(--ag)}.worst{font-weight:500;color:var(--ar);opacity:.85}
+.sc{text-align:center!important;padding:6px 8px!important}
+.spark{width:76px;height:22px;vertical-align:middle}
+.thd{min-width:96px;width:96px;text-align:center!important}
+.cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:10px}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.cc h3{font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.ch{position:relative;width:100%;height:260px}
+.cst{font-size:14px;font-weight:600;color:var(--txt1);margin:0 0 14px 4px;display:flex;align-items:center;gap:8px}
+</style>
+
+<div class="topbar">
+<div class="topbar-left">
+<div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/></svg></div>
+<h1>ตารางเปรียบเทียบแต่ละปี</h1>
+</div>
+</div>
+
+<div class="ts">
+<div class="tsh"><span class="dot"></span><h2>Production parameters</h2></div>
+<div class="tw">
+<table><thead><tr>
+<th>Parameter</th>
+<th><span class="yt yn">2025/26</span></th>
+<th><span class="yt y0">2024/25</span></th>
+<th><span class="yt y1">2023/24</span></th>
+<th><span class="yt y2">2022/23</span></th>
+<th><span class="yt y3">2021/22</span></th>
+<th><span class="yt y4">2020/21</span></th>
+<th class="thd">Trend</th>
+</tr></thead><tbody id="tb"></tbody></table>
+</div></div>
+
+<div class="cst"><span class="dot"></span>Trend analysis</div>
+<div class="cg" id="cg"></div>
+
+<script>
+const D={"2025/26":{},"2024/25":{"อ้อย (Tons Cane)":504680.22,"% อ้อยเข้าหีบ":87.01,"% Burnt Cane":5.24,"C.C.S":13.70,"% CCS":91.62,"Yield % Cane":12.55,"Extraction":97.03,"M.E":99.40,"Purified of 1st Juice":84.92,"Total Loss":18.17,"Loss in Bagasse (%)":2.97,"Loss in Filter Cake (%)":0.48,"Loss in Final Molasses (%)":9.61,"Undetermined Losses (%)":5.10,"Purity Molasses":34.92,"Average of Steam":458.53,"Total Sugar":63353.00,"ปริมาณขายไฟ (KWH)":7103802},"2023/24":{"อ้อย (Tons Cane)":487665.16,"% อ้อยเข้าหีบ":88.67,"% Burnt Cane":3.65,"C.C.S":13.64,"% CCS":92.52,"Yield % Cane":12.62,"Extraction":97.21,"M.E":98.80,"Purified of 1st Juice":84.31,"Total Loss":17.68,"Loss in Bagasse (%)":2.77,"Loss in Filter Cake (%)":0.28,"Loss in Final Molasses (%)":10.67,"Undetermined Losses (%)":3.97,"Purity Molasses":36.91,"Average of Steam":493.33,"Total Sugar":61537.40,"ปริมาณขายไฟ (KWH)":8388461},"2022/23":{"อ้อย (Tons Cane)":562058.68,"% อ้อยเข้าหีบ":98.61,"% Burnt Cane":11.12,"C.C.S":15.10,"% CCS":88.72,"Yield % Cane":13.40,"Extraction":97.28,"M.E":97.62,"Purified of 1st Juice":87.54,"Total Loss":18.70,"Loss in Bagasse (%)":2.72,"Loss in Filter Cake (%)":0.26,"Loss in Final Molasses (%)":8.58,"Undetermined Losses (%)":7.13,"Purity Molasses":37.35,"Average of Steam":472.69,"Total Sugar":75308.68,"ปริมาณขายไฟ (KWH)":5610579},"2021/22":{"อ้อย (Tons Cane)":414982.00,"% อ้อยเข้าหีบ":98.81,"% Burnt Cane":2.89,"C.C.S":14.88,"% CCS":91.42,"Yield % Cane":13.61,"Extraction":97.01,"M.E":98.62,"Purified of 1st Juice":88.11,"Total Loss":15.84,"Loss in Bagasse (%)":2.99,"Loss in Filter Cake (%)":0.22,"Loss in Final Molasses (%)":6.76,"Undetermined Losses (%)":5.87,"Purity Molasses":37.19,"Average of Steam":497.04,"Total Sugar":56471.78,"ปริมาณขายไฟ (KWH)":6315489},"2020/21":{"อ้อย (Tons Cane)":337001.11,"% อ้อยเข้าหีบ":96.29,"% Burnt Cane":0.57,"C.C.S":15.13,"% CCS":88.57,"Yield % Cane":13.40,"Extraction":97.12,"M.E":99.47,"Purified of 1st Juice":88.45,"Total Loss":18.31,"Loss in Bagasse (%)":2.86,"Loss in Filter Cake (%)":0.42,"Loss in Final Molasses (%)":7.67,"Undetermined Losses (%)":7.36,"Purity Molasses":38.69,"Average of Steam":500.41,"Total Sugar":45156.19,"ปริมาณขายไฟ (KWH)":4331361}};
+const Y=["2025/26","2024/25","2023/24","2022/23","2021/22","2020/21"],YR=Y.slice().reverse();
+const P=[
+{n:"อ้อย (Tons Cane)",f:"num",h:true},{n:"% อ้อยเข้าหีบ",f:"d2",h:true},{n:"% Burnt Cane",f:"d2",h:false},
+{n:"C.C.S",f:"d2",h:true},{n:"% CCS",f:"d2",h:true},{n:"Yield % Cane",f:"d2",h:true},
+{n:"Extraction",f:"d2",h:true},{n:"M.E",f:"d2",h:true},{n:"Purified of 1st Juice",f:"d2",h:true},
+{n:"_s",l:"Balance & Recovery"},
+{n:"Total Loss",f:"d2",h:false,acc:1},{n:"Loss in Bagasse (%)",f:"d2",h:false,sub:1},
+{n:"Loss in Filter Cake (%)",f:"d2",h:false,sub:1},{n:"Loss in Final Molasses (%)",f:"d2",h:false,sub:1},
+{n:"Undetermined Losses (%)",f:"d2",h:false,sub:1},
+{n:"_s",l:"Other parameters"},
+{n:"Purity Molasses",f:"d2",h:false},{n:"Average of Steam",f:"d2",h:false},
+{n:"Total Sugar",f:"num",h:true},{n:"ปริมาณขายไฟ (KWH)",f:"int",h:true}
+];
+function fmt(v,f){if(v==null)return'-';if(f==='num')return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});if(f==='int')return Math.round(v).toLocaleString('en-US');return v.toFixed(2)}
+const dk=matchMedia('(prefers-color-scheme:dark)').matches;
+function spk(vals){const vs=vals.filter(v=>v!=null).slice().reverse();if(vs.length<2)return'';const mn=Math.min(...vs),mx=Math.max(...vs),r=mx-mn||1;const w=8+(vs.length-1)*16;const pts=vs.map((v,i)=>`${8+i*16},${20-((v-mn)/r)*16}`).join(' ');const c=dk?'#A78BFA':'#7C3AED',cb=dk?'#A78BFA33':'#7C3AED22';return `<svg class="spark" viewBox="0 0 ${w+8} 24" style="width:${w+8}px"><polygon points="8,20 ${pts} ${8+(vs.length-1)*16},20" fill="${cb}"/><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>${vs.map((v,i)=>`<circle cx="${8+i*16}" cy="${20-((v-mn)/r)*16}" r="2.2" fill="${c}"/>`).join('')}</svg>`}
+const tb=document.getElementById('tb');let subs=[];
+P.forEach(p=>{if(p.n==='_s'){const r=document.createElement('tr');r.className='sr';r.innerHTML=`<td colspan="8">${p.l}</td>`;tb.appendChild(r);return}
+const vs=Y.map(y=>D[y][p.n]!=null?D[y][p.n]:null),vf=vs.filter(v=>v!=null),bv=vf.length?p.h?Math.max(...vf):Math.min(...vf):null,wv=vf.length?p.h?Math.min(...vf):Math.max(...vf):null;
+const tr=document.createElement('tr');
+if(p.acc){tr.className='at';tr.onclick=function(){this.classList.toggle('open');subs.forEach(r=>r.classList.toggle('vis'))}}
+if(p.sub){tr.className='subr';subs.push(tr)}
+let h=`<td>${p.n}</td>`;
+vs.forEach(v=>{if(v==null){h+=`<td style="color:var(--txt3)">-</td>`}else{const c=v===bv?'best':(v===wv?'worst':'');h+=`<td${c?' class="'+c+'"':''}>${fmt(v,p.f)}</td>`}});
+h+=`<td class="sc">${spk(vs)}</td>`;tr.innerHTML=h;tb.appendChild(tr)});
+
+const gc=dk?'rgba(167,139,250,0.08)':'rgba(124,58,237,0.05)',tc=dk?'#9790B8':'#6B6394',bf={family:"'DM Sans','Sarabun',sans-serif"};
+const pl=dk?['#A78BFA','#60A5FA','#34D399','#FBBF24','#F87171','#F9A8D4']:['#7C3AED','#3B82F6','#10B981','#F59E0B','#EF4444','#EC4899'];
+const CY=["2020/21","2021/22","2022/23","2023/24","2024/25","2025/26"];
+
+const bo={responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},
+    tooltip:{backgroundColor:dk?'#2D2841':'#fff',titleColor:dk?'#E8E5F5':'#1E1B4B',bodyColor:dk?'#9790B8':'#6B6394',borderColor:dk?'#3D3856':'#E9E5F5',borderWidth:1,padding:10,cornerRadius:8,titleFont:{...bf,weight:'600'},bodyFont:bf}},
+  scales:{
+    x:{grid:{color:gc,drawBorder:false},ticks:{color:tc,font:{size:11,...bf}},border:{display:false}},
+    y:{grid:{color:gc,drawBorder:false},ticks:{color:tc,font:{size:11,...bf}},border:{display:false}}
+  }};
+
+const cfs=[
+{id:'c1',t:'C.C.S',k:'C.C.S',cl:pl[0]},
+{id:'c2',t:'Yield % Cane',k:'Yield % Cane',cl:pl[2]},
+{id:'c3',t:'Total Sugar (ตัน)',k:'Total Sugar',cl:pl[1],bar:1},
+{id:'c4',t:'% CCS',k:'% CCS',cl:pl[3]},
+{id:'c5',t:'Extraction',k:'Extraction',cl:pl[0]},
+{id:'c6',t:'Purified of 1st Juice',k:'Purified of 1st Juice',cl:pl[2]},
+{id:'c7',t:'% Burnt Cane',k:'% Burnt Cane',cl:pl[4]},
+{id:'c8',t:'Losses breakdown (%)',k:'_stack'}
+];
+
+const cg=document.getElementById('cg');
+cfs.forEach(cf=>{
+  const d=document.createElement('div');
+  d.className='cc';
+  d.innerHTML=`<h3>${cf.t}</h3><div class="ch"><canvas id="${cf.id}"></canvas></div>`;
+  cg.appendChild(d);
+});
+
+cfs.forEach(cf=>{
+const x=document.getElementById(cf.id);
+if(cf.k==='_stack'){
+new Chart(x,{type:'bar',data:{labels:CY,datasets:[
+  {label:'Bagasse',data:CY.map(y=>D[y]["Loss in Bagasse (%)"]),backgroundColor:pl[0]+'aa',borderRadius:2},
+  {label:'Filter Cake',data:CY.map(y=>D[y]["Loss in Filter Cake (%)"]),backgroundColor:pl[1]+'aa',borderRadius:2},
+  {label:'Final Molasses',data:CY.map(y=>D[y]["Loss in Final Molasses (%)"]),backgroundColor:pl[2]+'aa',borderRadius:2},
+  {label:'Undetermined',data:CY.map(y=>D[y]["Undetermined Losses (%)"]),backgroundColor:pl[3]+'aa',borderRadius:2}
+]},options:{...bo,plugins:{...bo.plugins,legend:{display:true,labels:{color:tc,font:{size:10,...bf},boxWidth:10,padding:6}}},scales:{...bo.scales,x:{...bo.scales.x,stacked:true},y:{...bo.scales.y,stacked:true}}}});
+}else if(cf.bar){
+new Chart(x,{type:'bar',data:{labels:CY,datasets:[{label:cf.t,data:CY.map(y=>D[y][cf.k]),backgroundColor:CY.map((_,i)=>pl[i]+'88'),borderColor:CY.map((_,i)=>pl[i]),borderWidth:1,borderRadius:6}]},options:{...bo,scales:{...bo.scales,y:{...bo.scales.y,ticks:{...bo.scales.y.ticks,callback:v=>(v/1000).toFixed(0)+'k'}}}}});
+}else{
+new Chart(x,{type:'line',data:{labels:CY,datasets:[{label:cf.t,data:CY.map(y=>D[y][cf.k]),borderColor:cf.cl,backgroundColor:cf.cl+'22',tension:.35,pointRadius:5,pointBackgroundColor:cf.cl,pointBorderColor:dk?'#1C1A29':'#fff',pointBorderWidth:2,fill:true,borderWidth:2.5}]},options:bo});
+}});
+</script>
+</textarea>
 </body>
 </html>
