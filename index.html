@@ -929,6 +929,7 @@ function showComparison(){
     "Purity Molasses":L.fpd,
     "Average of Steam":L.asd,
     "Total Sugar":L.twd,
+    "Final Molasses % Cane":L.fcd,
     "ปริมาณขายไฟ (KWH)":L.ked
   };
   var compSrc=document.getElementById('compData').value;
@@ -1085,7 +1086,7 @@ tbody tr:hover td:first-child{background:var(--pri-50)}
 <div class="cg" id="cg"></div>
 
 <script>
-const D={"2025/26":{},"2024/25":{"อ้อย (Tons Cane)":504680.22,"% อ้อยเข้าหีบ":87.01,"% Burnt Cane":5.24,"C.C.S":13.70,"% CCS":91.62,"Yield % Cane":12.55,"Extraction":97.03,"M.E":99.40,"Purified of 1st Juice":84.92,"Total Loss":18.17,"Loss in Bagasse (%)":2.97,"Loss in Filter Cake (%)":0.48,"Loss in Final Molasses (%)":9.61,"Undetermined Losses (%)":5.10,"Purity Molasses":34.92,"Average of Steam":458.53,"Total Sugar":63353.00,"ปริมาณขายไฟ (KWH)":7103802},"2023/24":{"อ้อย (Tons Cane)":487665.16,"% อ้อยเข้าหีบ":88.67,"% Burnt Cane":3.65,"C.C.S":13.64,"% CCS":92.52,"Yield % Cane":12.62,"Extraction":97.21,"M.E":98.80,"Purified of 1st Juice":84.31,"Total Loss":17.68,"Loss in Bagasse (%)":2.77,"Loss in Filter Cake (%)":0.28,"Loss in Final Molasses (%)":10.67,"Undetermined Losses (%)":3.97,"Purity Molasses":36.91,"Average of Steam":493.33,"Total Sugar":61537.40,"ปริมาณขายไฟ (KWH)":8388461},"2022/23":{"อ้อย (Tons Cane)":562058.68,"% อ้อยเข้าหีบ":98.61,"% Burnt Cane":11.12,"C.C.S":15.10,"% CCS":88.72,"Yield % Cane":13.40,"Extraction":97.28,"M.E":97.62,"Purified of 1st Juice":87.54,"Total Loss":18.70,"Loss in Bagasse (%)":2.72,"Loss in Filter Cake (%)":0.26,"Loss in Final Molasses (%)":8.58,"Undetermined Losses (%)":7.13,"Purity Molasses":37.35,"Average of Steam":472.69,"Total Sugar":75308.68,"ปริมาณขายไฟ (KWH)":5610579},"2021/22":{"อ้อย (Tons Cane)":414982.00,"% อ้อยเข้าหีบ":98.81,"% Burnt Cane":2.89,"C.C.S":14.88,"% CCS":91.42,"Yield % Cane":13.61,"Extraction":97.01,"M.E":98.62,"Purified of 1st Juice":88.11,"Total Loss":15.84,"Loss in Bagasse (%)":2.99,"Loss in Filter Cake (%)":0.22,"Loss in Final Molasses (%)":6.76,"Undetermined Losses (%)":5.87,"Purity Molasses":37.19,"Average of Steam":497.04,"Total Sugar":56471.78,"ปริมาณขายไฟ (KWH)":6315489},"2020/21":{"อ้อย (Tons Cane)":337001.11,"% อ้อยเข้าหีบ":96.29,"% Burnt Cane":0.57,"C.C.S":15.13,"% CCS":88.57,"Yield % Cane":13.40,"Extraction":97.12,"M.E":99.47,"Purified of 1st Juice":88.45,"Total Loss":18.31,"Loss in Bagasse (%)":2.86,"Loss in Filter Cake (%)":0.42,"Loss in Final Molasses (%)":7.67,"Undetermined Losses (%)":7.36,"Purity Molasses":38.69,"Average of Steam":500.41,"Total Sugar":45156.19,"ปริมาณขายไฟ (KWH)":4331361}};
+const D={"2025/26":{},"2024/25":{"Final Molasses % Cane":4.86,"อ้อย (Tons Cane)":504680.22,"% อ้อยเข้าหีบ":87.01,"% Burnt Cane":5.24,"C.C.S":13.70,"% CCS":91.62,"Yield % Cane":12.55,"Extraction":97.03,"M.E":99.40,"Purified of 1st Juice":84.92,"Total Loss":18.17,"Loss in Bagasse (%)":2.97,"Loss in Filter Cake (%)":0.48,"Loss in Final Molasses (%)":9.61,"Undetermined Losses (%)":5.10,"Purity Molasses":34.92,"Average of Steam":458.53,"Total Sugar":63353.00,"ปริมาณขายไฟ (KWH)":7103802},"2023/24":{"Final Molasses % Cane":5.06,"อ้อย (Tons Cane)":487665.16,"% อ้อยเข้าหีบ":88.67,"% Burnt Cane":3.65,"C.C.S":13.64,"% CCS":92.52,"Yield % Cane":12.62,"Extraction":97.21,"M.E":98.80,"Purified of 1st Juice":84.31,"Total Loss":17.68,"Loss in Bagasse (%)":2.77,"Loss in Filter Cake (%)":0.28,"Loss in Final Molasses (%)":10.67,"Undetermined Losses (%)":3.97,"Purity Molasses":36.91,"Average of Steam":493.33,"Total Sugar":61537.40,"ปริมาณขายไฟ (KWH)":8388461},"2022/23":{"Final Molasses % Cane":4.35,"อ้อย (Tons Cane)":562058.68,"% อ้อยเข้าหีบ":98.61,"% Burnt Cane":11.12,"C.C.S":15.10,"% CCS":88.72,"Yield % Cane":13.40,"Extraction":97.28,"M.E":97.62,"Purified of 1st Juice":87.54,"Total Loss":18.70,"Loss in Bagasse (%)":2.72,"Loss in Filter Cake (%)":0.26,"Loss in Final Molasses (%)":8.58,"Undetermined Losses (%)":7.13,"Purity Molasses":37.35,"Average of Steam":472.69,"Total Sugar":75308.68,"ปริมาณขายไฟ (KWH)":5610579},"2021/22":{"Final Molasses % Cane":3.38,"อ้อย (Tons Cane)":414982.00,"% อ้อยเข้าหีบ":98.81,"% Burnt Cane":2.89,"C.C.S":14.88,"% CCS":91.42,"Yield % Cane":13.61,"Extraction":97.01,"M.E":98.62,"Purified of 1st Juice":88.11,"Total Loss":15.84,"Loss in Bagasse (%)":2.99,"Loss in Filter Cake (%)":0.22,"Loss in Final Molasses (%)":6.76,"Undetermined Losses (%)":5.87,"Purity Molasses":37.19,"Average of Steam":497.04,"Total Sugar":56471.78,"ปริมาณขายไฟ (KWH)":6315489},"2020/21":{"Final Molasses % Cane":3.76,"อ้อย (Tons Cane)":337001.11,"% อ้อยเข้าหีบ":96.29,"% Burnt Cane":0.57,"C.C.S":15.13,"% CCS":88.57,"Yield % Cane":13.40,"Extraction":97.12,"M.E":99.47,"Purified of 1st Juice":88.45,"Total Loss":18.31,"Loss in Bagasse (%)":2.86,"Loss in Filter Cake (%)":0.42,"Loss in Final Molasses (%)":7.67,"Undetermined Losses (%)":7.36,"Purity Molasses":38.69,"Average of Steam":500.41,"Total Sugar":45156.19,"ปริมาณขายไฟ (KWH)":4331361}};
 const Y=["2025/26","2024/25","2023/24","2022/23","2021/22","2020/21"],YR=Y.slice().reverse();
 const P=[
 {n:"อ้อย (Tons Cane)",f:"num",h:true},{n:"% อ้อยเข้าหีบ",f:"d2",h:true},{n:"% Burnt Cane",f:"d2",h:false},
@@ -1096,6 +1097,7 @@ const P=[
 {n:"Loss in Filter Cake (%)",f:"d2",h:false,sub:1},{n:"Loss in Final Molasses (%)",f:"d2",h:false,sub:1},
 {n:"Undetermined Losses (%)",f:"d2",h:false,sub:1},
 {n:"_s",l:"Other parameters"},
+{n:"Final Molasses % Cane",f:"d2",h:false},
 {n:"Purity Molasses",f:"d2",h:false},{n:"Average of Steam",f:"d2",h:false},
 {n:"Total Sugar",f:"num",h:true},{n:"ปริมาณขายไฟ (KWH)",f:"int",h:true}
 ];
@@ -1125,14 +1127,16 @@ const bo={responsive:true,maintainAspectRatio:false,
   }};
 
 const cfs=[
-{id:'c1',t:'C.C.S',k:'C.C.S',cl:pl[0]},
-{id:'c2',t:'Yield % Cane',k:'Yield % Cane',cl:pl[2]},
-{id:'c3',t:'Total Sugar (ตัน)',k:'Total Sugar',cl:pl[1],bar:1},
+{id:'c1',t:'% อ้อยเข้าหีบ',k:'% อ้อยเข้าหีบ',cl:pl[2]},
+{id:'c2',t:'% Burnt Cane',k:'% Burnt Cane',cl:pl[4]},
+{id:'c3',t:'C.C.S',k:'C.C.S',cl:pl[0]},
 {id:'c4',t:'% CCS',k:'% CCS',cl:pl[3]},
-{id:'c5',t:'Extraction',k:'Extraction',cl:pl[0]},
-{id:'c6',t:'Purified of 1st Juice',k:'Purified of 1st Juice',cl:pl[2]},
-{id:'c7',t:'% Burnt Cane',k:'% Burnt Cane',cl:pl[4]},
-{id:'c8',t:'Losses breakdown (%)',k:'_stack'}
+{id:'c5',t:'Yield % Cane',k:'Yield % Cane',cl:pl[2]},
+{id:'c6',t:'Losses breakdown (%)',k:'_stack'},
+{id:'c7',t:'Extraction',k:'Extraction',cl:pl[0]},
+{id:'c8',t:'Purified of 1st Juice',k:'Purified of 1st Juice',cl:pl[1]},
+{id:'c9',t:'Total Sugar (ตัน)',k:'Total Sugar',cl:pl[1],bar:1},
+{id:'c10',t:'ปริมาณขายไฟ (KWH)',k:'ปริมาณขายไฟ (KWH)',cl:pl[3],bar:1}
 ];
 
 const cg=document.getElementById('cg');
@@ -1153,7 +1157,9 @@ new Chart(x,{type:'bar',data:{labels:CY,datasets:[
   {label:'Undetermined',data:CY.map(y=>D[y]["Undetermined Losses (%)"]),backgroundColor:pl[3]+'aa',borderRadius:2}
 ]},options:{...bo,plugins:{...bo.plugins,legend:{display:true,labels:{color:tc,font:{size:10,...bf},boxWidth:10,padding:6}}},scales:{...bo.scales,x:{...bo.scales.x,stacked:true},y:{...bo.scales.y,stacked:true}}}});
 }else if(cf.bar){
-new Chart(x,{type:'bar',data:{labels:CY,datasets:[{label:cf.t,data:CY.map(y=>D[y][cf.k]),backgroundColor:CY.map((_,i)=>pl[i]+'88'),borderColor:CY.map((_,i)=>pl[i]),borderWidth:1,borderRadius:6}]},options:{...bo,scales:{...bo.scales,y:{...bo.scales.y,ticks:{...bo.scales.y.ticks,callback:v=>(v/1000).toFixed(0)+'k'}}}}});
+const bv=CY.map(y=>D[y][cf.k]||0);
+const yOpts=cf.k==='Total Sugar'?{...bo.scales.y,beginAtZero:true,ticks:{...bo.scales.y.ticks,callback:v=>(v/1000).toFixed(0)+'k'}}:{...bo.scales.y,beginAtZero:true,ticks:{...bo.scales.y.ticks,callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'k':v}};
+new Chart(x,{type:'bar',data:{labels:CY,datasets:[{label:cf.t,data:bv,backgroundColor:CY.map((_,i)=>pl[i%pl.length]+'88'),borderColor:CY.map((_,i)=>pl[i%pl.length]),borderWidth:1,borderRadius:6}]},options:{...bo,scales:{...bo.scales,y:yOpts}}});
 }else{
 new Chart(x,{type:'line',data:{labels:CY,datasets:[{label:cf.t,data:CY.map(y=>D[y][cf.k]),borderColor:cf.cl,backgroundColor:cf.cl+'22',tension:.35,pointRadius:5,pointBackgroundColor:cf.cl,pointBorderColor:dk?'#1C1A29':'#fff',pointBorderWidth:2,fill:true,borderWidth:2.5}]},options:bo});
 }});
