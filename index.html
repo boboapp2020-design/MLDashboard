@@ -119,12 +119,55 @@ body.green-theme .login-overlay{background:linear-gradient(135deg,#064e2b 0%,#0d
 .comp-back{position:fixed;top:16px;right:20px;z-index:10001;background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.3);transition:.2s}
 .comp-back:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,58,237,.4)}
 
-#compOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;background:#FAFAFF}
+#compOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;background:#FAFAFF;-webkit-overflow-scrolling:touch}
 #compOverlay.show{display:block}
 #compFrame{width:100%;height:100%;border:none}
-.comp-back{position:fixed;top:16px;right:20px;z-index:10001;background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;border:none;padding:10px 20px;border-radius:10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.3);transition:.2s;display:none}
+.comp-back{position:fixed;top:12px;right:12px;z-index:10001;background:linear-gradient(135deg,#7c3aed,#8b5cf6);color:#fff;border:none;padding:8px 16px;border-radius:10px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(124,58,237,.3);transition:.2s;display:none}
+@media(max-width:768px){.comp-back{top:8px;right:8px;padding:7px 12px;font-size:10px;border-radius:8px}}
 .comp-back:hover{transform:translateY(-2px)}
 #compOverlay.show+.comp-back,#compOverlay.show~.comp-back{display:block}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .hdr{padding:12px 14px}
+  .hdr-t h1{font-size:14px}
+  .hdr-t p,.hdr-sub{font-size:9px}
+  .hdr-logo{width:36px;height:36px;border-radius:8px}
+  .hdr-b{gap:4px}
+  .bdg{padding:5px 8px;font-size:9px;min-width:auto}
+  .bdg .vl{font-size:12px !important}
+  .bdg .lb{font-size:8px}
+  .logout-btn{padding:5px 8px;font-size:9px}
+  .tabs{gap:3px;padding:0 8px;flex-wrap:wrap}
+  .tab-b{padding:7px 10px !important;font-size:10px !important}
+  .fr{flex-direction:column}
+  .g2,.g3{grid-template-columns:1fr !important}
+  [style*='grid-template-columns:repeat(5']{grid-template-columns:repeat(2,1fr) !important}
+  [style*='grid-template-columns:repeat(3']{grid-template-columns:1fr !important}
+  .cd{padding:14px 12px}
+  .kv{font-size:22px}
+  .kv-s{font-size:16px}
+  .cd-t{font-size:11px}
+  .sec{margin-bottom:12px}
+  .sec-t{font-size:12px}
+  table{font-size:10px}
+  table th,table td{padding:6px 8px}
+  .sum-box{padding:18px 14px;max-width:98vw}
+  .sum-row .sl{font-size:10px}
+  .sum-row .sv{font-size:11px}
+  .sum-comment{font-size:10px !important}
+  .ch-box{min-height:180px}
+  .cw{height:180px}
+  .scroll-top{width:36px;height:36px;font-size:16px;bottom:10px;right:10px}
+}
+@media(max-width:480px){
+  .hdr-b{flex-direction:row;flex-wrap:wrap;justify-content:center}
+  .bdg{flex:0 0 auto}
+  [style*='grid-template-columns:repeat(5']{grid-template-columns:1fr !important}
+  .kv{font-size:20px}
+  .tabs{justify-content:center}
+  .tab-b{font-size:9px !important;padding:6px 8px !important}
+}
 </style>
 </head>
 <body>
@@ -1055,11 +1098,78 @@ tbody tr:hover td:first-child{background:var(--pri-50)}
 .sc{text-align:center!important;padding:6px 8px!important}
 .spark{width:76px;height:22px;vertical-align:middle}
 .thd{min-width:96px;width:96px;text-align:center!important}
-.cg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:10px}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:10px}
 .cc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
 .cc h3{font-size:12px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .ch{position:relative;width:100%;height:260px}
 .cst{font-size:14px;font-weight:600;color:var(--txt1);margin:0 0 14px 4px;display:flex;align-items:center;gap:8px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .hdr{padding:12px 14px}
+  .hdr-t h1{font-size:14px}
+  .hdr-t p,.hdr-sub{font-size:9px}
+  .hdr-logo{width:36px;height:36px;border-radius:8px}
+  .hdr-b{gap:4px}
+  .bdg{padding:5px 8px;font-size:9px;min-width:auto}
+  .bdg .vl{font-size:12px !important}
+  .bdg .lb{font-size:8px}
+  .logout-btn{padding:5px 8px;font-size:9px}
+  .tabs{gap:3px;padding:0 8px;flex-wrap:wrap}
+  .tab-b{padding:7px 10px !important;font-size:10px !important}
+  .fr{flex-direction:column}
+  .g2,.g3{grid-template-columns:1fr !important}
+  [style*='grid-template-columns:repeat(5']{grid-template-columns:repeat(2,1fr) !important}
+  [style*='grid-template-columns:repeat(3']{grid-template-columns:1fr !important}
+  .cd{padding:14px 12px}
+  .kv{font-size:22px}
+  .kv-s{font-size:16px}
+  .cd-t{font-size:11px}
+  .sec{margin-bottom:12px}
+  .sec-t{font-size:12px}
+  table{font-size:10px}
+  table th,table td{padding:6px 8px}
+  .sum-box{padding:18px 14px;max-width:98vw}
+  .sum-row .sl{font-size:10px}
+  .sum-row .sv{font-size:11px}
+  .sum-comment{font-size:10px !important}
+  .ch-box{min-height:180px}
+  .cw{height:180px}
+  .scroll-top{width:36px;height:36px;font-size:16px;bottom:10px;right:10px}
+}
+@media(max-width:480px){
+  .hdr-b{flex-direction:row;flex-wrap:wrap;justify-content:center}
+  .bdg{flex:0 0 auto}
+  [style*='grid-template-columns:repeat(5']{grid-template-columns:1fr !important}
+  .kv{font-size:20px}
+  .tabs{justify-content:center}
+  .tab-b{font-size:9px !important;padding:6px 8px !important}
+}
+
+@media(max-width:768px){
+  .topbar{padding:10px 14px}
+  .topbar h1{font-size:14px}
+  .ts{border-radius:10px}
+  .tsh{padding:10px 14px}
+  .tsh h2{font-size:12px}
+  table{font-size:11px;min-width:600px}
+  th,td{padding:8px 10px}
+  th:first-child,td:first-child{min-width:140px;width:140px;font-size:10px}
+  .cg{grid-template-columns:1fr !important}
+  .cc{padding:12px 14px}
+  .cc h3{font-size:11px}
+  .ch{height:220px}
+  .spark{width:60px;height:18px}
+  .thd{min-width:70px;width:70px}
+  .yt{font-size:9px;padding:1px 5px}
+}
+@media(max-width:480px){
+  table{min-width:500px;font-size:10px}
+  th,td{padding:6px 8px}
+  th:first-child,td:first-child{min-width:110px;width:110px;font-size:9px}
+  .ch{height:200px}
+  .cg{gap:10px}
+}
 </style>
 
 <div class="topbar">
