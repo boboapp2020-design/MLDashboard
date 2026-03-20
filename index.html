@@ -918,7 +918,7 @@ function showComparison(){
     "C.C.S":L.sd,
     "% CCS":L.trd,
     "Yield % Cane":L.yd,
-    "Extraction":L.ord,
+    "Extraction":97.0133,
     "M.E":L.med,
     "Purified of 1st Juice":L.pur_d,
     "Total Loss":L.tld,
@@ -951,6 +951,8 @@ function hideComparison(){
   document.getElementById('compBackBtn').style.display='none';
   document.body.style.overflow='';
   document.getElementById('compFrame').srcdoc='';
+  // Re-render dashboard to fix any chart issues
+  setTimeout(function(){render()},200);
 }
 
 
@@ -1126,6 +1128,15 @@ const bo={responsive:true,maintainAspectRatio:false,
     y:{grid:{color:gc,drawBorder:false},ticks:{color:tc,font:{size:11,...bf}},border:{display:false}}
   }};
 
+
+function saveCompChart(id,title){
+  var canvas=document.getElementById(id);
+  if(!canvas)return;
+  var a=document.createElement('a');
+  a.download='comparison_'+title+'.png';
+  a.href=canvas.toDataURL('image/png',1.0);
+  a.click();
+}
 const cfs=[
 {id:'c1',t:'% อ้อยเข้าหีบ',k:'% อ้อยเข้าหีบ',cl:pl[2]},
 {id:'c2',t:'% Burnt Cane',k:'% Burnt Cane',cl:pl[4]},
@@ -1135,15 +1146,15 @@ const cfs=[
 {id:'c6',t:'Losses breakdown (%)',k:'_stack'},
 {id:'c7',t:'Extraction',k:'Extraction',cl:pl[0]},
 {id:'c8',t:'Purified of 1st Juice',k:'Purified of 1st Juice',cl:pl[1]},
-{id:'c9',t:'Total Sugar (ตัน)',k:'Total Sugar',cl:pl[1],bar:1},
-{id:'c10',t:'ปริมาณขายไฟ (KWH)',k:'ปริมาณขายไฟ (KWH)',cl:pl[3],bar:1}
+{id:'c9',t:'Total Sugar (ตัน)',k:'Total Sugar',cl:pl[1]},
+{id:'c10',t:'ปริมาณขายไฟ (KWH)',k:'ปริมาณขายไฟ (KWH)',cl:pl[3]}
 ];
 
 const cg=document.getElementById('cg');
 cfs.forEach(cf=>{
   const d=document.createElement('div');
   d.className='cc';
-  d.innerHTML=`<h3>${cf.t}</h3><div class="ch"><canvas id="${cf.id}"></canvas></div>`;
+  d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><h3>${cf.t}</h3><button onclick="saveCompChart('${cf.id}','${cf.t}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;color:var(--txt2)">💾</button></div><div class="ch"><canvas id="${cf.id}"></canvas></div>`;
   cg.appendChild(d);
 });
 
@@ -1156,13 +1167,38 @@ new Chart(x,{type:'bar',data:{labels:CY,datasets:[
   {label:'Final Molasses',data:CY.map(y=>D[y]["Loss in Final Molasses (%)"]),backgroundColor:pl[2]+'aa',borderRadius:2},
   {label:'Undetermined',data:CY.map(y=>D[y]["Undetermined Losses (%)"]),backgroundColor:pl[3]+'aa',borderRadius:2}
 ]},options:{...bo,plugins:{...bo.plugins,legend:{display:true,labels:{color:tc,font:{size:10,...bf},boxWidth:10,padding:6}}},scales:{...bo.scales,x:{...bo.scales.x,stacked:true},y:{...bo.scales.y,stacked:true}}}});
-}else if(cf.bar){
-const bv=CY.map(y=>D[y][cf.k]||0);
-const yOpts=cf.k==='Total Sugar'?{...bo.scales.y,beginAtZero:true,ticks:{...bo.scales.y.ticks,callback:v=>(v/1000).toFixed(0)+'k'}}:{...bo.scales.y,beginAtZero:true,ticks:{...bo.scales.y.ticks,callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'k':v}};
-new Chart(x,{type:'bar',data:{labels:CY,datasets:[{label:cf.t,data:bv,backgroundColor:CY.map((_,i)=>pl[i%pl.length]+'88'),borderColor:CY.map((_,i)=>pl[i%pl.length]),borderWidth:1,borderRadius:6}]},options:{...bo,scales:{...bo.scales,y:yOpts}}});
 }else{
-new Chart(x,{type:'line',data:{labels:CY,datasets:[{label:cf.t,data:CY.map(y=>D[y][cf.k]),borderColor:cf.cl,backgroundColor:cf.cl+'22',tension:.35,pointRadius:5,pointBackgroundColor:cf.cl,pointBorderColor:dk?'#1C1A29':'#fff',pointBorderWidth:2,fill:true,borderWidth:2.5}]},options:bo});
-}});
+const vals=CY.map(y=>D[y][cf.k]||null);
+var fmtLabel;
+if(cf.k==='Total Sugar')fmtLabel=function(v){return(v/1000).toFixed(0)+'k'};
+else if(cf.k.includes('KWH'))fmtLabel=function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k'};
+else fmtLabel=function(v){return typeof v==='number'?v.toFixed(2):v};
+new Chart(x,{type:'line',data:{labels:CY,datasets:[{label:cf.t,data:vals,borderColor:cf.cl,backgroundColor:cf.cl+'22',tension:.35,pointRadius:6,pointBackgroundColor:CY.map((_,i)=>pl[i%pl.length]),pointBorderColor:dk?'#1C1A29':'#fff',pointBorderWidth:2.5,fill:true,borderWidth:2.5}]},
+options:{...bo,plugins:{...bo.plugins,
+  datalabels:{display:false}
+},scales:{...bo.scales,
+  y:(function(){var ys={grid:{color:gc,drawBorder:false},ticks:{color:tc,font:{size:11,...bf}},border:{display:false}};
+    if(cf.k==='Total Sugar')ys.ticks.callback=function(v){return(v/1000).toFixed(0)+'k'};
+    else if(cf.k.includes('KWH'))ys.ticks.callback=function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':(v/1000).toFixed(0)+'k'};
+    return ys})()
+}},
+plugins:[{afterDatasetsDraw:function(chart){
+  const ctx=chart.ctx;
+  chart.data.datasets.forEach(function(ds,di){
+    const meta=chart.getDatasetMeta(di);
+    meta.data.forEach(function(el,i){
+      const v=ds.data[i];if(v==null)return;
+      ctx.save();ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.font='600 10px DM Sans,Sarabun,sans-serif';
+      ctx.fillStyle=dk?'#E8E5F5':'#1E1B4B';
+      const label=fmtLabel(v);
+      ctx.fillText(label,el.x,el.y-8);
+      ctx.restore();
+    });
+  });
+}}]
+});
+}})
 </script>
 </textarea>
 </body>
