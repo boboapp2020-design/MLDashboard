@@ -300,34 +300,119 @@ const ST_2425=[{"d":"2024-12-07","ho_t":24.0,"ho_d":24.0,"ho_x":2616.0,"hc_t":24
 let currentSeason='2526';
 let D_2526=[...D],ST_2526=[...ST];
 
-// Load persisted data from localStorage (if Admin uploaded newer data)
-(function(){
-  try{
-    var savedD=localStorage.getItem('ml_D_2526');
-    var savedST=localStorage.getItem('ml_ST_2526');
-    if(savedD){
-      var parsed=JSON.parse(savedD);
-      if(parsed.length>=D.length){
-        // Check if saved data is same or newer
-        var savedLast=parsed[parsed.length-1].d;
-        var currentLast=D[D.length-1].d;
-        if(savedLast>=currentLast){
-          D.length=0;for(var i=0;i<parsed.length;i++)D.push(parsed[i]);
-          D_2526.length=0;for(var i=0;i<D.length;i++)D_2526.push(D[i]);
-          console.log('Loaded '+D.length+' daily records from cache (last: '+savedLast+')');
+// Load latest data from Google Sheet (source of truth for all users)
+var _sheetLoaded=false;
+function loadFromSheet(){
+  fetch(APPS_SCRIPT_URL+'?action=get_all')
+  .then(function(r){return r.json()})
+  .then(function(res){
+    if(res.status==='ok'){
+      // Parse Daily from Sheet format back to D format
+      if(res.daily&&res.daily.length>0){
+        var newD=res.daily.map(function(row){
+          var r={d:row.Date,dn:row.DayNo,rn:row.ReportNo,pr:row.Period,
+            ct:row.Cane_Today,cd:row.Cane_Todate,cx:row.Cane_Target,
+            st:row.CCS_Today,sd:row.CCS_Todate,sx:row.CCS_Target,
+            pt:row.Pol_Today,pd:row.Pol_Todate,px:row.Pol_Target,
+            bt:row.Burnt_Today,bd:row.Burnt_Todate,bx:row.Burnt_Target,
+            yt:row.Yield_Today,yd:row.Yield_Todate,yx:row.Yield_Target,
+            fwt:row.FM_Weight_Today,fwd:row.FM_Weight_Todate,fwx:row.FM_Weight_Target,
+            fct:row.FM_Cane_Today,fcd:row.FM_Cane_Todate,fcx:row.FM_Cane_Target,
+            fpt:row.FM_Purity_Today,fpd:row.FM_Purity_Todate,fpx:row.FM_Purity_Target,
+            twt:row.Sugar_Today,twd:row.Sugar_Todate,twx:row.Sugar_Target,
+            tpt:row.SugarPol_Today,tpd:row.SugarPol_Todate,tpx:row.SugarPol_Target,
+            t9t:row['96Pol_Today'],t9d:row['96Pol_Todate'],t9x:row['96Pol_Target'],
+            trt:row.CCSRecovery_Today,trd:row.CCSRecovery_Todate,trx:row.CCSRecovery_Target,
+            met:row.ME_Today,med:row.ME_Todate,
+            ort:row.OverallRecovery_Today,ord:row.OverallRecovery_Todate,orx:row.OverallRecovery_Target,
+            tlt:row.TotalLoss_Today,tld:row.TotalLoss_Todate,tlx:row.TotalLoss_Target,
+            lbt:row.LossBagasse_Today,lbd:row.LossBagasse_Todate,lbx:row.LossBagasse_Target,
+            lft:row.LossFilterCake_Today,lfd:row.LossFilterCake_Todate,lfx:row.LossFilterCake_Target,
+            lmt:row.LossMolasses_Today,lmd:row.LossMolasses_Todate,lmx:row.LossMolasses_Target,
+            udt:row.LossUndetermined_Today,udd:row.LossUndetermined_Todate,udx:row.LossUndetermined_Target,
+            ast:row.Steam_Today,asd:row.Steam_Todate,
+            ket:row.KWH_EDL_Today,ked:row.KWH_EDL_Todate,
+            tet:row.OTE_Today,ted:row.OTE_Todate,
+            pur_t:row['Purity1stJuice_Today'],pur_d:row['Purity1stJuice_Todate'],
+            bhr_t:row.BHR_Today,bhr_d:row.BHR_Todate,bhr_x:row.BHR_Target,
+            eg_t:row.KWH_Generated_Today,eg_d:row.KWH_Generated_Todate,
+            eu_t:row.KWH_Used_Today,eu_d:row.KWH_Used_Todate,
+            euc_t:row.KWH_UsedPerTC_Today,euc_d:row.KWH_UsedPerTC_Todate,
+            eus_t:row.KWH_UsedPerTS_Today,eus_d:row.KWH_UsedPerTS_Todate,
+            enc_t:row.NetKWH_TC_Today,enc_d:row.NetKWH_TC_Todate,enc_x:row.NetKWH_TC_Target,
+            fb_used_t:row.BagasseUsed_Today,fb_used_d:row.BagasseUsed_Todate,fb_used_x:row.BagasseUsed_Target,
+            fb_surp_t:row.BagasseSurplus_Today,fb_surp_d:row.BagasseSurplus_Todate,fb_surp_x:row.BagasseSurplus_Target,
+            w_raw_t:row.Water_Raw_Today,w_raw_d:row.Water_Raw_Todate,
+            w_waste_t:row.Water_Waste_Today,w_waste_d:row.Water_Waste_Todate,
+            srmk:[]};
+          // Parse srmk from JSON string
+          try{if(row.Stop_JSON)r.srmk=JSON.parse(row.Stop_JSON)}catch(e){}
+          return r;
+        });
+        if(newD.length>0){
+          var sheetLast=newD[newD.length-1].d;
+          var staticLast=D[D.length-1].d;
+          if(sheetLast>=staticLast){
+            D.length=0;for(var i=0;i<newD.length;i++)D.push(newD[i]);
+            D_2526.length=0;for(var i=0;i<D.length;i++)D_2526.push(D[i]);
+            console.log('[Sheet] Loaded '+D.length+' daily (last: '+sheetLast+')');
+          }
         }
       }
-    }
-    if(savedST){
-      var parsedST=JSON.parse(savedST);
-      if(parsedST.length>=ST.length){
-        ST.length=0;for(var i=0;i<parsedST.length;i++)ST.push(parsedST[i]);
-        ST_2526.length=0;for(var i=0;i<ST.length;i++)ST_2526.push(ST[i]);
-        console.log('Loaded '+ST.length+' stoptime records from cache');
+      // Parse Stoptime
+      if(res.stoptime&&res.stoptime.length>0){
+        var newST=res.stoptime.map(function(row){
+          var r={d:row.Date,
+            ho_t:row.HoursOpen_Today,ho_d:row.HoursOpen_Todate,ho_x:row.HoursOpen_Target,
+            hc_t:row.HoursCrushing_Today,hc_d:row.HoursCrushing_Todate,hc_x:row.HoursCrushing_Target,
+            ote_t:row.OTE_Today,ote_d:row.OTE_Todate,ote_x:row.OTE_Target,
+            me_t:row.ME_Today,me_d:row.ME_Todate,me_x:row.ME_Target,
+            ts_t:row.TotalStopped_Today,ts_d:row.TotalStopped_Todate,ts_x:row.TotalStopped_Target,
+            tm_t:row.Mechanical_Today,tm_d:row.Mechanical_Todate,tm_x:row.Mechanical_Target,
+            ml_t:row.Milling_Today,ml_d:row.Milling_Todate,ml_x:row.Milling_Target,
+            bl_t:row.Boiler_Today,bl_d:row.Boiler_Todate,bl_x:row.Boiler_Target,
+            pw_t:row.Power_Today,pw_d:row.Power_Todate,pw_x:row.Power_Target,
+            tb_t:row.BoilingHouse_Today,tb_d:row.BoilingHouse_Todate,tb_x:row.BoilingHouse_Target,
+            ev_t:row.Evaporator_Today,ev_d:row.Evaporator_Todate,ev_x:row.Evaporator_Target,
+            vp_t:row.VacuumPan_Today,vp_d:row.VacuumPan_Todate,vp_x:row.VacuumPan_Target,
+            cf_t:row.Centrifugal_Today,cf_d:row.Centrifugal_Todate,cf_x:row.Centrifugal_Target,
+            to_t:row.Other_Today,to_d:row.Other_Todate,to_x:row.Other_Target,
+            mm_t:row.MechMaint_Today,mm_d:row.MechMaint_Todate,mm_x:row.MechMaint_Target,
+            em_t:row.ElecMaint_Today,em_d:row.ElecMaint_Todate,em_x:row.ElecMaint_Target,
+            inst_t:row.Instrument_Today,inst_d:row.Instrument_Todate,inst_x:row.Instrument_Target,
+            nc_t:row.NonCrush_Today,nc_d:row.NonCrush_Todate,
+            rmks:[]};
+          try{if(row.Stop_Remarks_JSON)r.rmks=JSON.parse(row.Stop_Remarks_JSON)}catch(e){}
+          return r;
+        });
+        if(newST.length>0){
+          ST.length=0;for(var i=0;i<newST.length;i++)ST.push(newST[i]);
+          ST_2526.length=0;for(var i=0;i<ST.length;i++)ST_2526.push(ST[i]);
+          console.log('[Sheet] Loaded '+ST.length+' stoptime');
+        }
+      }
+      _sheetLoaded=true;
+      // Rebuild dropdown & render
+      if(currentSeason==='2526'){
+        var sel=document.getElementById('ds');
+        if(sel){sel.innerHTML='';D.forEach(function(r,i){var o=document.createElement('option');o.value=i;o.textContent=r.d+'  —  วันหีบที่ '+(r.rn||i+1);sel.appendChild(o)});ix=D.length-1;sel.value=ix}
+        render();
       }
     }
-  }catch(e){console.warn('localStorage load failed:',e)}
-})();
+  }).catch(function(err){
+    console.warn('[Sheet] Fetch failed, using static data:',err);
+    // Fallback to localStorage
+    try{
+      var savedD=localStorage.getItem('ml_D_2526');
+      if(savedD){var p=JSON.parse(savedD);if(p.length>=D.length){D.length=0;for(var i=0;i<p.length;i++)D.push(p[i]);D_2526.length=0;for(var i=0;i<D.length;i++)D_2526.push(D[i]);console.log('[Cache] Loaded '+D.length+' daily')}}
+      var savedST=localStorage.getItem('ml_ST_2526');
+      if(savedST){var p2=JSON.parse(savedST);if(p2.length>=ST.length){ST.length=0;for(var i=0;i<p2.length;i++)ST.push(p2[i]);ST_2526.length=0;for(var i=0;i<ST.length;i++)ST_2526.push(ST[i])}}
+      if(currentSeason==='2526')render();
+    }catch(e){}
+  });
+}
+// Load on startup (after initial render)
+setTimeout(loadFromSheet,1500);
 
 function switchSeason(s){
   if(s===currentSeason)return;
@@ -1059,7 +1144,7 @@ function hideComparison(){
 
 
 
-const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbw6bN-VLsgYHt2-swn-_vS_V6g9dkOoATwl8fF_aGMimUd8jZpm0c-mfnOLU202TT8KTQ/exec';
+const APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwAE3-BW3FkrQO_rIsSgYpLJGpIni6sfzzEzyhGvEVH686Pyavk14xgs7Dl8lw4WMewBA/exec';
 
 function checkAdmin(){
   const isA=sessionStorage.getItem('ml_admin')==='1'||localStorage.getItem('ml_admin')==='1';
@@ -1206,12 +1291,11 @@ function updateLocalDashboard(nd,ns){
     ST_2526.length=0;for(var i=0;i<ST.length;i++)ST_2526.push(ST[i]);
   }
   
-  // Save to localStorage for persistence
+  // Also cache to localStorage as backup
   try{
     localStorage.setItem('ml_D_2526',JSON.stringify(D));
     localStorage.setItem('ml_ST_2526',JSON.stringify(ST));
-    localStorage.setItem('ml_data_updated',new Date().toISOString());
-  }catch(e){console.warn('localStorage save failed:',e)}
+  }catch(e){}
   
   // Rebuild dropdown
   var sel=document.getElementById('ds');
