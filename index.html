@@ -332,7 +332,7 @@ function mc(id,type,lb,ds,o={}){const el=document.getElementById(id);if(!el)retu
 function ln(l,d,c,dash){return{label:l,data:d,borderColor:c,backgroundColor:c+'15',fill:!dash,borderDash:dash?[8,4]:[],pointRadius:0,borderWidth:dash?1.8:2.5,order:dash?0:1,tension:.4,borderCapStyle:'round'}}
 function br(l,d,c){return{label:l,data:d,backgroundColor:c+'70',borderColor:c,borderWidth:0,borderRadius:5,barPercentage:.65,type:'bar',order:2}}
 function rL(l,v,c,n){return{label:l,data:Array(n).fill(v),borderColor:c+'99',borderDash:[10,5],borderWidth:1.8,pointRadius:0,pointHoverRadius:0,fill:false,type:'line',order:0}}
-function arcG(act,tgt,label,unit,sz){const pct=tgt>0?Math.min((act/tgt)*100,100):0,r=44,hc=Math.PI*r,fill=pct/100*hc;const gc=pct>=90?'#0d8f47':pct>=70?'#65a30d':pct>=50?'#f59e0b':pct>=25?'#ea580c':'#dc2626';const af=act>=10000?fI(act):f2(act,0),tf=tgt>=10000?fI(tgt):f2(tgt,0);return `<svg viewBox="0 0 150 105" width="${sz||200}"><path d="M 23 75 A 44 44 0 0 1 127 75" fill="none" stroke="#e5e7eb" stroke-width="10" stroke-linecap="round"/><path d="M 23 75 A 44 44 0 0 1 127 75" fill="none" stroke="${gc}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${fill} ${hc}"/><text x="75" y="55" text-anchor="middle" font-family="Inter" font-size="18" font-weight="800" fill="${gc}">${f2(pct,1)}%</text><text x="75" y="70" text-anchor="middle" font-family="Inter" font-size="7.5" font-weight="600" fill="#334155">${af} / ${tf}</text><text x="75" y="84" text-anchor="middle" font-family="Noto Sans Thai" font-size="6.5" fill="#64748b" font-weight="500">${label}</text><text x="75" y="94" text-anchor="middle" font-family="Inter" font-size="5.5" fill="#94a3b8">${unit}</text></svg>`}
+function arcG(act,tgt,label,unit,sz){const pct=tgt>0?(act/tgt)*100:0,fillPct=Math.min(pct,100),r=44,hc=Math.PI*r,fill=fillPct/100*hc;const gc=pct>=90?'#0d8f47':pct>=70?'#65a30d':pct>=50?'#f59e0b':pct>=25?'#ea580c':'#dc2626';const af=act>=10000?fI(act):f2(act,0),tf=tgt>=10000?fI(tgt):f2(tgt,0);return `<svg viewBox="0 0 150 105" width="${sz||200}"><path d="M 23 75 A 44 44 0 0 1 127 75" fill="none" stroke="#e5e7eb" stroke-width="10" stroke-linecap="round"/><path d="M 23 75 A 44 44 0 0 1 127 75" fill="none" stroke="${gc}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${fill} ${hc}"/><text x="75" y="55" text-anchor="middle" font-family="Inter" font-size="18" font-weight="800" fill="${gc}">${f2(pct,1)}%</text><text x="75" y="70" text-anchor="middle" font-family="Inter" font-size="7.5" font-weight="600" fill="#334155">${af} / ${tf}</text><text x="75" y="84" text-anchor="middle" font-family="Noto Sans Thai" font-size="6.5" fill="#64748b" font-weight="500">${label}</text><text x="75" y="94" text-anchor="middle" font-family="Inter" font-size="5.5" fill="#94a3b8">${unit}</text></svg>`}
 
 function toggleColl(id){const b=document.getElementById('cb_'+id),d=document.getElementById('cd_'+id);b.classList.toggle('open');d.classList.toggle('open')}
 
@@ -689,10 +689,18 @@ function render(){
   const pieEl=document.getElementById('st_pie');
   if(pieEl){
     if(chs['st_pie'])chs['st_pie'].destroy();
-    const pieTotal=stR.tm_d+stR.tb_d+stR.to_d+stR.nc_d;
+    // คำนวณ No Cane (ด้านอ้อย) จาก srmk ของทุกวันใน S
+    let noCane_d=0;
+    S.forEach(function(r){if(r.srmk&&r.srmk.length)r.srmk.forEach(function(rm){if(rm.dept&&rm.dept.includes('อ้อย'))noCane_d+=rm.dur_hr||0})});
+    noCane_d=Math.round(noCane_d*100)/100;
+    const pieTotal=(stR.tm_d||0)+(stR.tb_d||0)+(stR.to_d||0)+noCane_d;
+    if(pieTotal<=0){
+      const ctx=pieEl.getContext('2d');ctx.clearRect(0,0,pieEl.width,pieEl.height);
+      ctx.font='12px Noto Sans Thai';ctx.fillStyle='#94a3b8';ctx.textAlign='center';ctx.fillText('ไม่มีข้อมูลการหยุดหีบ',pieEl.width/2,pieEl.height/2);
+    } else {
     chs['st_pie']=new Chart(pieEl,{type:'doughnut',
-      data:{labels:['Mech/Elec','Boiling House','Other','No Cane'],
-        datasets:[{data:[stR.tm_d,stR.tb_d,stR.to_d,stR.nc_d],backgroundColor:['#dc262690','#f59e0b90','#6366f190','#22c55e90'],borderWidth:2,borderColor:'#fff'}]},
+      data:{labels:['Mech/Elec','Boiling House','Other','รออ้อย (ด้านอ้อย)'],
+        datasets:[{data:[stR.tm_d||0,stR.tb_d||0,stR.to_d||0,noCane_d],backgroundColor:['#dc262690','#f59e0b90','#6366f190','#22c55e90'],borderWidth:2,borderColor:'#fff'}]},
       options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
         plugins:{legend:{position:'bottom',labels:{font:{size:10,family:'Noto Sans Thai'},padding:12,generateLabels:function(chart){
           const d=chart.data;return d.labels.map((l,i)=>{const v=d.datasets[0].data[i];const pct=pieTotal>0?(v/pieTotal*100).toFixed(1):'0';return{text:`${l}: ${v.toFixed(1)}h (${pct}%)`,fillStyle:d.datasets[0].backgroundColor[i],index:i}})}}},
@@ -701,6 +709,7 @@ function render(){
       },
       plugins:[{id:'centerText',afterDraw:function(chart){const{ctx:c,chartArea:{width:w,height:h,top:t,left:l}}=chart;c.save();c.font='800 22px Inter';c.fillStyle='#0f172a';c.textAlign='center';c.fillText(pieTotal.toFixed(1),l+w/2,t+h/2-4);c.font='500 10px Noto Sans Thai';c.fillStyle='#64748b';c.fillText('ชม. รวม',l+w/2,t+h/2+14);c.restore()}}]
     });
+    }
   }
 }
 
@@ -1066,7 +1075,7 @@ function parseExcelDaily(data){
     var cv=function(r,c){return excelVal(ws,r,c)};var ds=function(r,c){return excelDate(ws,r,c)};
     var deptMap={'ผลิตไฟฟ้า':'ไฟฟ้าผลิต','ไฟฟ้า':'ไฟฟ้าผลิต','EVAPORATOR':'หม้อต้ม','จัดหา':'ด้านอ้อย'};
     var srmk=[];
-    for(var r=67;r<=73;r++){var q=cv(r,17);if(!q||String(q).includes('REMARK')||String(q).includes('CHIEF'))continue;var dur=cv(r,18);if(!dur)continue;var dept=String(cv(r,19)||'').trim();if(dept==='0')dept='';dept=deptMap[dept]||dept;var cause='';for(var cc=21;cc<=24;cc++){var v=cv(r,cc);if(v&&String(v).trim()&&String(v)!=='0'){cause=String(v).trim();break}}srmk.push({time:String(q).trim(),dur_hr:Math.round(dur*100)/100,dur_min:Math.round(dur*60),dept:dept,cause:cause})}
+    for(var r=67;r<=73;r++){var q=cv(r,17);if(!q||String(q).includes('REMARK')||String(q).includes('CHIEF'))continue;var dur=cv(r,18);if(!dur)continue;var dept=String(cv(r,19)||'').trim();if(dept==='0')dept='';dept=deptMap[dept]||dept;var cause='';for(var cc=21;cc<=26;cc++){var v=cv(r,cc);if(v&&String(v).trim()&&String(v)!=='0'&&!String(v).includes('REMARK')&&!String(v).includes('CHIEF')){cause=String(v).trim();break}}srmk.push({time:String(q).trim(),dur_hr:Math.round(dur*100)/100,dur_min:Math.round(dur*60),dept:dept,cause:cause})}
     var yx=cv(45,8);if(typeof yx==='number'&&yx>20)yx=Math.round(yx/10*100)/100;
     return {d:ds(3,4),dn:cv(3,10),rn:cv(3,14),pr:cv(3,8),ct:cv(7,4),cd:cv(7,7),cx:cv(7,8),st:cv(10,4),sd:cv(10,7),sx:cv(10,8),pt:cv(9,4),pd:cv(9,7),px:cv(9,8),bt:cv(11,4),bd:cv(11,7),bx:cv(11,8),yt:cv(45,4),yd:cv(45,7),yx:yx,fwt:cv(54,4),fwd:cv(54,7),fwx:cv(54,8),fct:cv(55,4),fcd:cv(55,7),fcx:cv(55,8),fpt:cv(58,4),fpd:cv(58,7),fpx:cv(58,8),twt:cv(43,4),twd:cv(43,7),twx:cv(43,8),tpt:cv(44,4),tpd:cv(44,7),tpx:cv(44,8),t9t:cv(46,4),t9d:cv(46,7),t9x:cv(46,8),trt:cv(47,4),trd:cv(47,7),trx:cv(47,8),met:cv(76,12),med:cv(76,15),ort:cv(36,12),ord:cv(36,15),orx:cv(36,16),tlt:cv(37,12),tld:cv(37,15),tlx:cv(37,16),lbt:cv(38,12),lbd:cv(38,15),lbx:cv(38,16),lft:cv(39,12),lfd:cv(39,15),lfx:cv(39,16),lmt:cv(40,12),lmd:cv(40,15),lmx:cv(40,16),udt:cv(41,12),udd:cv(41,15),udx:cv(41,16),ast:cv(49,12),asd:cv(49,15),ket:cv(58,12),ked:cv(58,15),tet:cv(75,12),ted:cv(75,15),w_raw_t:cv(88,20),w_raw_d:cv(88,23),w_waste_t:cv(89,20),w_waste_d:cv(89,23),pur_t:cv(35,20),pur_d:cv(35,23),bhr_t:cv(42,12),bhr_d:cv(42,15),bhr_x:cv(42,16)||86.04,eg_t:cv(52,12),eg_d:cv(52,15),eu_t:cv(53,12),eu_d:cv(53,15),euc_t:cv(54,12),euc_d:cv(54,15),eus_t:cv(55,12),eus_d:cv(55,15),enc_t:cv(56,12),enc_d:cv(56,15),enc_x:cv(56,16)||'<32',fb_used_t:cv(61,12),fb_used_d:cv(61,15),fb_used_x:cv(61,16),fb_surp_t:cv(62,12),fb_surp_d:cv(62,15),fb_surp_x:cv(62,16),srmk:srmk,ch_lime_t:cv(126,12),ch_lime_d:cv(126,15),ch_lime_ppm_t:cv(127,12),ch_lime_ppm_d:cv(127,15),ch_floc_t:cv(128,12),ch_floc_d:cv(128,15),ch_floc_ppm_t:cv(129,12),ch_floc_ppm_d:cv(129,15),ch_caustic_evap_t:cv(131,12),ch_caustic_evap_d:cv(131,15),ch_mccn_t:cv(136,12),ch_mccn_d:cv(136,15),ch_oxy_t:cv(137,12),ch_oxy_d:cv(137,15),ch_pac_t:cv(141,12),ch_pac_d:cv(141,15),ch_maxfloc_t:cv(142,12),ch_maxfloc_d:cv(142,15),ch_caustic_wt_t:cv(143,12),ch_caustic_wt_d:cv(143,15),ch_nacl_t:cv(144,12),ch_nacl_d:cv(144,15),ch_naocl_t:cv(145,12),ch_naocl_d:cv(145,15)};
   }catch(e){console.error('[Parse Daily]',e);return null}
